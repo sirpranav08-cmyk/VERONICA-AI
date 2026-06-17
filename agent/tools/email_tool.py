@@ -106,6 +106,60 @@ def get_email_count(service: str = "gmail") -> str:
         return f"You have {count} unread emails in {service}."
     except Exception as e:
         return f"Error: {e}"
+def search_emails(query: str, count: int = 5, service: str = "gmail") -> str:
+    """Search emails by keyword."""
+    try:
+        cfg = EMAIL_CONFIG.get(service.lower(), EMAIL_CONFIG["gmail"])
+        if not cfg["address"] or not cfg["password"]:
+            return f"Error: {service} credentials not set."
+
+        mail = imaplib.IMAP4_SSL(cfg["imap_host"], cfg["imap_port"])
+        mail.login(cfg["address"], cfg["password"])
+        mail.select("INBOX")
+
+        # Search by subject keyword
+        status, messages = mail.search(None, f'SUBJECT "{query}"')
+        email_ids = messages[0].split()
+
+        if not email_ids:
+            # Try body search
+            status, messages = mail.search(None, f'TEXT "{query}"')
+            email_ids = messages[0].split()
+
+        if not email_ids:
+            return f"No emails found related to '{query}'."
+
+        latest = email_ids[-count:]
+        results = []
+
+        for eid in reversed(latest):
+            status, msg_data = mail.fetch(eid, "(RFC822)")
+            raw = msg_data[0][1]
+            msg = email.message_from_bytes(raw)
+
+            subject = decode_header(msg["Subject"])[0][0]
+            if isinstance(subject, bytes):
+                subject = subject.decode()
+
+            sender = msg.get("From", "Unknown")
+            date = msg.get("Date", "Unknown")
+
+            body = ""
+            if msg.is_multipart():
+                for part in msg.walk():
+                    if part.get_content_type() == "text/plain":
+                        body = part.get_payload(decode=True).decode(errors='ignore')[:150]
+                        break
+            else:
+                body = msg.get_payload(decode=True).decode(errors='ignore')[:150]
+
+            results.append(f"From: {sender}\nDate: {date}\nSubject: {subject}\nPreview: {body[:100]}")
+
+        mail.logout()
+        return f"Found {len(results)} email(s) for '{query}':\n\n" + "\n---\n".join(results)
+
+    except Exception as e:
+        return f"Error searching emails: {e}"
 
 if __name__ == "__main__":
     print("Testing email...")

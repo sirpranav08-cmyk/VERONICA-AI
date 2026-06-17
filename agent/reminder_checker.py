@@ -25,7 +25,16 @@ def check_reminders():
                         msg = r["message"]
                         print(f"[Reminder] FIRED: {msg}")
                         show_notification(msg)
-                        r["done"] = True
+                        # Check if recurring
+                        msg = r.get("message", "").lower()
+                        if "every" in msg or "weekly" in msg or "daily" in msg:
+                        # Reschedule for next week
+                            from datetime import timedelta
+                            next_dt = target + timedelta(weeks=1)
+                            r["datetime"] = next_dt.isoformat()
+                            print(f"[Reminder] Rescheduled recurring: {next_dt}")
+                        else:
+                            r["done"] = True
                         changed = True
                 if changed:
                     REMINDERS_FILE.write_text(json.dumps(reminders, indent=2))

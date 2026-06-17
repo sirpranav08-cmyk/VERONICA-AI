@@ -3,8 +3,7 @@ import json
 import asyncio
 import uvicorn
 import threading
-from pathlib import Path
-from datetime import datetime
+import re
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -14,6 +13,7 @@ from core.agent import JarvisAgent
 from core.config import Config
 import startup_briefing
 import reminder_checker
+import jarvis_voice
 
 # ── Background threads ──────────────────────────────────────────────
 def run_briefing():
@@ -25,7 +25,7 @@ threading.Thread(target=run_briefing, daemon=True).start()
 threading.Thread(target=reminder_checker.check_reminders, daemon=True).start()
 
 # ── FastAPI app ─────────────────────────────────────────────────────
-app = FastAPI(title="JARVIS Agent API")
+app = FastAPI(title="VERONICA Agent API")
 
 app.add_middleware(
     CORSMiddleware,
@@ -35,6 +35,15 @@ app.add_middleware(
 )
 
 agent = JarvisAgent(Config())
+
+def clean_for_speech(text: str) -> str:
+    """Remove URLs, paths, symbols before speaking."""
+    text = re.sub(r'http[s]?://\S+', '', text)
+    text = re.sub(r'[A-Za-z]:\\[\w\\\.\-]+', '', text)
+    text = re.sub(r'Executing \w+\.\.\.', '', text)
+    text = re.sub(r'[⚙*#`•]', '', text)
+    text = re.sub(r'\s+', ' ', text).strip()
+    return text[:400]
 
 # ── Routes ──────────────────────────────────────────────────────────
 @app.get("/health")
@@ -60,17 +69,44 @@ async def listen_endpoint():
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
-    print("[JARVIS] Client connected")
+    print("[VERONICA] Client connected")
     try:
         while True:
             data = await websocket.receive_text()
             payload = json.loads(data)
             user_input = payload.get("message", "")
-            async for chunk in agent.stream(user_input):
-                await websocket.send_text(json.dumps(chunk))
+            full_response = ""
+            already_spoke = False
+
+            try:
+                async for chunk in agent.stream(user_input):
+                    await websocket.send_text(json.dumps(chunk))
+
+                    if chunk.get("type") == "token":
+                        full_response += chunk.get("content", "")
+
+                    elif chunk.get("type") == "done":
+                        if not already_spoke:
+                            already_spoke = True
+                            clean = clean_for_speech(full_response)
+                            if clean and len(clean) > 3:
+                                threading.Thread(
+                                    target=jarvis_voice.speak,
+                                    args=(clean,),
+                                    daemon=True
+                                ).start()
+
+            except Exception as e:
+                print(f"[VERONICA] Stream error: {e}")
+                await websocket.send_text(json.dumps({
+                    "type": "token",
+                    "content": "Sorry, I encountered an error. Please try again."
+                }))
+                await websocket.send_text(json.dumps({"type": "done"}))
+
     except WebSocketDisconnect:
-        print("[JARVIS] Client disconnected")
+        print("[VERONICA] Client disconnected")
 
 if __name__ == "__main__":
-    print("[JARVIS] Starting on http://127.0.0.1:8765")
+    print("[VERONICA] Starting on http://127.0.0.1:8765")
     uvicorn.run(app, host="127.0.0.1", port=8765)

@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>JARVIS</title>
+  <title>VERONICA</title>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap"
     rel="stylesheet">
   <style>
@@ -535,7 +535,7 @@
       </div>
       <div id="transcript">
         <div class="msg jarvis">
-          <div class="av j">J</div>
+          <div class="av j">V</div>
           <div class="bubble">V.E.R.O.N.I.C.A online. All systems nominal.<br>Local inference active — Ollama ·
             Mistral.<br><br><span style="color:var(--cyan)"></span>type a command.</div>
         </div>
@@ -632,7 +632,7 @@
         if (m.type === 'token') { if (!curBubble) curBubble = addBubble('jarvis'); curBubble.textContent += m.content; scrollB(); }
         if (m.type === 'tool_start') { flashTool(m.tool); addBadge(m.tool); log('Tool: ' + m.tool, true); }
         if (m.type === 'tool_result') { curBubble = null; }
-        if (m.type === 'done') { const t = curBubble?.textContent || ''; curBubble = null; setOrb('speaking'); speakJarvis(t); enableIn(); rmTyping(); }
+        if(m.type==='done'){curBubble=null;enableIn();rmTyping();speakJarvis(curBubble?.textContent||'');}
       };
     }
 
@@ -647,7 +647,7 @@
       if (v) u.voice = v;
       u.onstart = () => { isSpeaking = true; setOrb('speaking'); document.getElementById('t-tts').classList.add('active'); };
       u.onend = () => { isSpeaking = false; setOrb('idle'); document.getElementById('t-tts').classList.remove('active'); };
-      speechSynthesis.speak(u);
+      //speechSynthesis.speak(u);
     }
     function toggleMic() {
       if (isRec) { stopMic(); return; }
@@ -801,7 +801,7 @@
     function addBubble(role, text = '') {
       rmTyping();
       const w = document.createElement('div'); w.className = `msg ${role === 'jarvis' ? 'jarvis' : 'user'}`;
-      const av = document.createElement('div'); av.className = `av ${role === 'jarvis' ? 'j' : 'u'}`; av.textContent = role === 'jarvis' ? 'J' : 'U';
+      const av = document.createElement('div'); av.className = `av ${role === 'jarvis' ? 'V' : 'u'}`; av.textContent = role === 'jarvis' ? 'V' : 'U';
       const b = document.createElement('div'); b.className = 'bubble'; b.textContent = text;
       w.appendChild(av); w.appendChild(b);
       document.getElementById('transcript').appendChild(w); scrollB(); return b;
@@ -813,7 +813,7 @@
     }
     function addTyping() {
       const w = document.createElement('div'); w.className = 'msg jarvis'; w.id = 'typ';
-      w.innerHTML = '<div class="av j">J</div><div class="bubble"><div class="dots"><span></span><span></span><span></span></div></div>';
+      w.innerHTML = '<div class="av j">V</div><div class="bubble"><div class="dots"><span></span><span></span><span></span></div></div>';
       document.getElementById('transcript').appendChild(w); scrollB();
     }
     function rmTyping() { document.getElementById('typ')?.remove(); }
@@ -875,3 +875,5 @@
 </body>
 
 </html>
+
+

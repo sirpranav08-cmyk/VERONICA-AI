@@ -37,34 +37,21 @@ def get_pending_reminders():
     return []
 
 def speak(text):
-    """Use Microsoft Edge Neural TTS — natural female voice."""
-    import asyncio
-    import edge_tts
-    import tempfile
+    """Use Windows Zira TTS — fully offline."""
     import subprocess
-    import os
-
-    async def _speak():
-        # Best female voices:
-        # en-US-JennyNeural — warm, friendly
-        # en-US-AriaNeural — professional
-        # en-IN-NeerjaNeural — Indian English female
-        voice = "en-US-JennyNeural"
-        communicate = edge_tts.Communicate(text, voice, rate="+5%", pitch="+0Hz")
-        tmp = os.path.join(tempfile.gettempdir(), "jarvis_speak.mp3")
-        await communicate.save(tmp)
-        jarvis_voice.speak(text)
-        subprocess.run(
-            ["powershell", "-c", f"(New-Object Media.SoundPlayer).PlaySync()"],
-            capture_output=True
-        )
-        # Play using PowerShell
-        subprocess.run([
-            "powershell", "-WindowStyle", "Hidden", "-Command",
-            f"$mp = New-Object System.Windows.Media.MediaPlayer; $mp.Open([uri]'{tmp}'); $mp.Play(); Start-Sleep -Seconds 10"
-        ], capture_output=True)
-
-    asyncio.run(_speak())
+    safe = text.replace("'", "").replace('"', '').replace('\n', ' ')
+    script = f"""
+Add-Type -AssemblyName System.Speech
+$s = New-Object System.Speech.Synthesis.SpeechSynthesizer
+$s.SelectVoice('Microsoft Zira Desktop')
+$s.Rate = 1
+$s.Volume = 100
+$s.Speak('{safe}')
+"""
+    subprocess.run(
+        ["powershell", "-WindowStyle", "Hidden", "-Command", script],
+        timeout=60
+    )
 def build_briefing():
     name = get_user_name()
     now = datetime.now()

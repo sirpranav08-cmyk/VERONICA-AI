@@ -158,15 +158,30 @@ class ToolRegistry:
             import json
             from datetime import datetime, timedelta
 
-            if date.lower() == "today":
-                target_date = datetime.now().date()
+            now = datetime.now()
+            
+            # Handle day names
+            day_map = {
+                "monday": 0, "tuesday": 1, "wednesday": 2,
+                "thursday": 3, "friday": 4, "saturday": 5, "sunday": 6
+            }
+            
+            if date.lower() in day_map:
+                target_day = day_map[date.lower()]
+                current_day = now.weekday()
+                days_ahead = target_day - current_day
+                if days_ahead <= 0:
+                    days_ahead += 7
+                target_date = (now + timedelta(days=days_ahead)).date()
+            elif date.lower() == "today":
+                target_date = now.date()
             elif date.lower() == "tomorrow":
-                target_date = (datetime.now() + timedelta(days=1)).date()
+                target_date = (now + timedelta(days=1)).date()
             else:
                 try:
                     target_date = datetime.strptime(date, "%Y-%m-%d").date()
                 except:
-                    target_date = datetime.now().date()
+                    target_date = now.date()
 
             try:
                 target_time = datetime.strptime(time, "%H:%M").time()
@@ -187,7 +202,7 @@ class ToolRegistry:
             reminders.append({
                 "message": message,
                 "datetime": target_dt.isoformat(),
-                "created": datetime.now().isoformat(),
+                "created": now.isoformat(),
                 "done": False
             })
             reminders_file.write_text(json.dumps(reminders, indent=2))
@@ -211,11 +226,24 @@ class ToolRegistry:
             if not upcoming:
                 return "No upcoming reminders."
 
+            now = datetime.now()
+            today = now.date()
             lines = []
+
             for r in upcoming:
                 dt = datetime.fromisoformat(r["datetime"])
-                lines.append(f"- {r['message']} at {dt.strftime('%B %d %Y at %I:%M %p')}")
-            return "\n".join(lines)
+                diff = (dt.date() - today).days
+                if diff == 0:
+                    when = "TODAY"
+                elif diff == 1:
+                    when = "TOMORROW"
+                elif diff < 0:
+                    when = "OVERDUE"
+                else:
+                    when = dt.strftime("%B %d %Y")
+                lines.append(f"- {r['message']} → {when} at {dt.strftime('%I:%M %p')}")
+
+            return "Your upcoming tasks:\n" + "\n".join(lines)
 
         # ── Screen control tools ────────────────────────────────────
 
@@ -350,3 +378,53 @@ class ToolRegistry:
                 return f"Screen: {w}x{h} | Mouse at: ({x}, {y})"
             except Exception as e:
                 return f"Error: {e}"
+        @self.register(
+            name="get_facts",
+            description="Get all stored facts about the user",
+            args_schema={}
+        )
+        def get_facts() -> str:
+            import json
+            facts_file = Path("D:/jarvis-agent/agent/data/facts.json")
+            if not facts_file.exists():
+                return "No facts stored yet."
+            facts = json.loads(facts_file.read_text())
+            if not facts:
+                return "No facts stored yet."
+            lines = [f"- {k}: {v['value']}" for k, v in facts.items()]
+            return "Here's what I know about you:\n" + "\n".join(lines)
+        # ── Email tools ─────────────────────────────────────────────
+        @self.register(
+            name="check_email_count",
+            description="Check how many unread emails you have",
+            args_schema={"service": "string gmail/outlook"}
+        )
+        def check_email_count(service: str = "gmail") -> str:
+            from tools.email_tool import get_email_count
+            return get_email_count(service)
+
+        @self.register(
+            name="read_emails",
+            description="Read latest unread emails",
+            args_schema={"count": "int", "service": "string gmail/outlook"}
+        )
+        def read_emails(count: int = 5, service: str = "gmail") -> str:
+            from tools.email_tool import read_emails as _read
+            return _read(count, service)
+
+        @self.register(
+            name="send_email",
+            description="Send an email",
+            args_schema={"to": "string", "subject": "string", "body": "string", "service": "string gmail/outlook"}
+        )
+        def send_email(to: str, subject: str, body: str, service: str = "gmail") -> str:
+            from tools.email_tool import send_email as _send
+            return _send(to, subject, body, service)
+        @self.register(
+            name="search_email",
+            description="Search emails by keyword or topic",
+            args_schema={"query": "string keyword to search", "service": "string gmail/outlook"}
+        )
+        def search_email(query: str, service: str = "gmail") -> str:
+            from tools.email_tool import search_emails
+            return search_emails(query, 5, service)
