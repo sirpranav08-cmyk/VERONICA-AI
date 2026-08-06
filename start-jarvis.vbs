@@ -1,24 +1,23 @@
 Set WshShell = CreateObject("WScript.Shell")
 
-' Kill any existing processes
-WshShell.Run "taskkill /F /IM python.exe", 0, True
-WshShell.Run "taskkill /F /IM electron.exe", 0, True
-
-' Wait
-WScript.Sleep 3000
-
-' Start Ollama
-WshShell.Run "ollama serve", 0, False
+' Start Ollama silently
+WshShell.Run "cmd /c set OLLAMA_HOST=0.0.0.0 && ollama serve", 0, False
 
 ' Wait for Ollama
+WScript.Sleep 6000
+
+' Start Agent silently
+WshShell.Run "cmd /c cd /d D:\jarvis-agent\agent && call .venv\Scripts\activate && python main.py", 0, False
+
+' Wait for Agent
+WScript.Sleep 6000
+
+' Start Mobile Server silently
+WshShell.Run "cmd /c cd /d D:\jarvis-agent\mobile && npx expo start", 0, False
+
+' Wait for Mobile Server
 WScript.Sleep 5000
 
-' Start agent
-WshShell.Run "cmd /c cd /d D:\jarvis-agent\agent && .venv\Scripts\activate && python main.py", 0, False
-
-' Wait for agent to fully load
-WScript.Sleep 10000
-
-' Start desktop app
+' Start Desktop App
 WshShell.CurrentDirectory = "D:\jarvis-agent\desktop"
 WshShell.Run "D:\jarvis-agent\desktop\node_modules\electron\dist\electron.exe D:\jarvis-agent\desktop", 1, False

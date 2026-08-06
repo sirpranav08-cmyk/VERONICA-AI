@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 @dataclass
 class Config:
-    model: str = "llama3.2:1b"
+    model: str = "phi3:mini"
     ollama_base_url: str = "http://localhost:11434"
     temperature: float = 0.1
     context_window: int = 2048

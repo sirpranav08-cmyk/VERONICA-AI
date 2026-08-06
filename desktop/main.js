@@ -3,7 +3,8 @@ const { app, BrowserWindow } = require('electron')
 const path = require('path')
 
 let win
-
+app.commandLine.appendSwitch('enable-speech-dispatcher')
+app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required')
 app.whenReady().then(() => {
   win = new BrowserWindow({
     width: 1400,
