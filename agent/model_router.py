@@ -44,12 +44,12 @@ MODEL_ROUTES = {
     "detailed":  "mistral:latest",
 
     # Science / technical
-    "science":   "phi3:mini",
-    "technical": "phi3:mini",
-    "medical":   "phi3:mini",
+    "science":   "deepseek-r1:1.5b",
+    "technical": "deepseek-r1:1.5b",
+    "medical":   "deepseek-r1:1.5b",
 }
 
-DEFAULT_MODEL = "deepseek-r1:1.5b"
+DEFAULT_MODEL = "phi3:mini"
 
 # All available models
 AVAILABLE_MODELS = [
@@ -60,7 +60,6 @@ AVAILABLE_MODELS = [
     "codellama:latest",
     "gemma2:2b",
     "mistral:latest",
-    "phi3:mini",
 ]
 
 def detect_model(text: str) -> str:

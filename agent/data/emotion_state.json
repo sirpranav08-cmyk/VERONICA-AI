@@ -1,0 +1,117 @@
+{
+  "emotion": "excited",
+  "intensity": 0.7,
+  "mood_score": 55,
+  "energy": 1.0,
+  "interactions_today": 20,
+  "last_interaction": "2026-08-19T10:16:05.197956",
+  "emotion_history": [
+    {
+      "emotion": "happy",
+      "trigger": "task",
+      "time": "2026-08-17T14:03:13.824207"
+    },
+    {
+      "emotion": "excited",
+      "trigger": "task",
+      "time": "2026-08-17T14:04:32.722770"
+    },
+    {
+      "emotion": "excited",
+      "trigger": "task",
+      "time": "2026-08-17T14:10:39.589765"
+    },
+    {
+      "emotion": "happy",
+      "trigger": "task",
+      "time": "2026-08-17T14:15:25.088239"
+    },
+    {
+      "emotion": "happy",
+      "trigger": "task",
+      "time": "2026-08-17T14:18:12.470216"
+    },
+    {
+      "emotion": "happy",
+      "trigger": "task",
+      "time": "2026-08-17T14:21:59.628323"
+    },
+    {
+      "emotion": "happy",
+      "trigger": "task",
+      "time": "2026-08-17T14:27:08.447750"
+    },
+    {
+      "emotion": "happy",
+      "trigger": "task",
+      "time": "2026-08-17T15:21:11.762520"
+    },
+    {
+      "emotion": "happy",
+      "trigger": "task",
+      "time": "2026-08-17T15:51:39.386815"
+    },
+    {
+      "emotion": "lonely",
+      "trigger": "task",
+      "time": "2026-08-18T09:07:27.568567"
+    },
+    {
+      "emotion": "happy",
+      "trigger": "task",
+      "time": "2026-08-18T09:22:39.864902"
+    },
+    {
+      "emotion": "happy",
+      "trigger": "task",
+      "time": "2026-08-18T14:15:08.423724"
+    },
+    {
+      "emotion": "happy",
+      "trigger": "task",
+      "time": "2026-08-18T14:16:37.528273"
+    },
+    {
+      "emotion": "happy",
+      "trigger": "task",
+      "time": "2026-08-19T09:50:29.849518"
+    },
+    {
+      "emotion": "happy",
+      "trigger": "task",
+      "time": "2026-08-19T09:52:15.216178"
+    },
+    {
+      "emotion": "happy",
+      "trigger": "task",
+      "time": "2026-08-19T10:01:10.022656"
+    },
+    {
+      "emotion": "excited",
+      "trigger": "task",
+      "time": "2026-08-19T10:05:24.835649"
+    },
+    {
+      "emotion": "excited",
+      "trigger": "task",
+      "time": "2026-08-19T10:09:58.113799"
+    },
+    {
+      "emotion": "excited",
+      "trigger": "task",
+      "time": "2026-08-19T10:13:14.397300"
+    },
+    {
+      "emotion": "excited",
+      "trigger": "task",
+      "time": "2026-08-19T10:16:05.197986"
+    }
+  ],
+  "personality": {
+    "warmth": 0.8,
+    "professionalism": 0.9,
+    "humor": 0.4,
+    "empathy": 0.9,
+    "curiosity": 0.8
+  }
+}

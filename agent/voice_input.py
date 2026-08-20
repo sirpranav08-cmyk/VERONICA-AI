@@ -40,6 +40,15 @@ def transcribe(audio, sample_rate):
 def listen_once(duration=5):
     audio, sr = record_audio(duration)
     return transcribe(audio, sr)
+def transcribe_file(path: str) -> str:
+    """Transcribe an audio file using Whisper."""
+    try:
+        model = WhisperModel("tiny", device="cpu", compute_type="int8")
+        segments, _ = model.transcribe(path, beam_size=1, language="en")
+        return " ".join(s.text for s in segments).strip()
+    except Exception as e:
+        print(f"[Whisper] Error: {e}")
+        return ""
 
 if __name__ == "__main__":
     load_model()

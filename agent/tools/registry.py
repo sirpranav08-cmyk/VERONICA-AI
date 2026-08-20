@@ -77,13 +77,19 @@ class ToolRegistry:
         # ── Browser Control ─────────────────────────────────────────
         @self.register(
             name="open_url",
-            description="Open a website in the browser",
+            description="Open a URL in Chrome browser",
             args_schema={"url": "string"}
         )
         def open_url(url: str) -> str:
-            from tools.browser_tool import open_url as _open
-            return _open(url)
-
+            import subprocess
+            if not url.startswith('http'):
+                url = 'https://' + url
+            subprocess.Popen(
+                f'start chrome "{url}"',
+                shell=True,
+                creationflags=subprocess.CREATE_NO_WINDOW
+            )
+            return f"Opened {url} in Chrome, Sir."
         @self.register(
             name="search_google",
             description="Search Google and get results",
@@ -150,6 +156,68 @@ class ToolRegistry:
                 return f"File written: {path}"
             except Exception as e:
                 return f"Error writing file: {e}"
+        
+        @self.register(
+            name="self_dev_stats",
+            description="Show VERONICA self-learning statistics",
+            args_schema={}
+        )
+        def self_dev_stats() -> str:
+            from self_dev import get_stats
+            stats = get_stats()
+            patterns = stats.get("patterns", {})
+            return (
+                f"Self-development stats, Sir:\n"
+                f"Total commands learned: {stats.get('total_commands', 0)}\n"
+                f"Peak usage hour: {patterns.get('peak_hour', '?')}:00\n"
+                f"Peak day: {patterns.get('peak_day', '?')}\n"
+                f"Next predicted command: {stats.get('prediction', 'Unknown')}\n"
+                f"Proactive suggestion: {stats.get('suggestion', 'None')}"
+            )
+
+        @self.register(
+            name="generate_tool",
+            description="Generate a new tool for a capability VERONICA doesn't have",
+            args_schema={"capability": "what you want VERONICA to be able to do"}
+        )
+        def generate_tool(capability: str) -> str:
+            from self_dev import generate_tool_from_failed_command
+            return generate_tool_from_failed_command(capability)
+    
+        @self.register(
+            name="show_decisions",
+            description="Show recent autonomous decisions VERONICA made",
+            args_schema={}
+        )
+        def show_decisions() -> str:
+            from autonomous import get_recent_decisions
+            decisions = get_recent_decisions(5)
+            if not decisions:
+                return "No autonomous decisions made yet, Sir."
+            lines = ["Recent autonomous decisions:"]
+            for d in decisions:
+                lines.append(f"• {d['decision']} → {d['action']}")
+            return "\n".join(lines)
+        @self.register(
+            name="how_are_you",
+            description="VERONICA shares her emotional state",
+            args_schema={}
+        )
+        def how_are_you() -> str:
+            from emotions import get_mood_summary
+            return get_mood_summary()
+
+        @self.register(
+            name="set_emotion",
+            description="Set VERONICA's emotion manually",
+            args_schema={"emotion": "happy/sad/excited/calm/angry/curious/tired"}
+        )
+        def set_emotion_tool(emotion: str) -> str:
+            from emotions import set_emotion, EMOTIONAL_REACTIONS
+            if set_emotion(emotion):
+                emoji = EMOTIONAL_REACTIONS.get(emotion, "💙")
+                return f"I am now feeling {emotion} {emoji}, Sir."
+            return f"Unknown emotion: {emotion}, Sir."
 
         # ── Run shell ────────────────────────────────────────────
         @self.register(
@@ -779,7 +847,7 @@ class ToolRegistry:
             name="book_restaurant",
             description="Auto-call a restaurant and book a table using Twilio",
             args_schema={
-                "restaurant_phone": "phone number with country code e.g. +919876543210",
+                "restaurant_phone": "phone number with country code e.g. +917358570817",
                 "restaurant_name": "name of restaurant",
                 "date": "booking date",
                 "time": "booking time",
@@ -804,3 +872,653 @@ class ToolRegistry:
             guest_name = facts.get("user_name", {}).get("value", "Pranav")
             return book_table(restaurant_phone, restaurant_name,
                             guest_name, date, time, guests)
+        # ── Full Control Tools ───────────────────────────────────
+        @self.register(name="browse_web", description="Open any URL in browser",
+                      args_schema={"url": "string"})
+        def browse_web(url: str) -> str:
+            from full_control import browse_web as bw
+            return bw(url)
+
+        @self.register(name="download_file", description="Download file from URL",
+                      args_schema={"url": "string"})
+        def download_file(url: str) -> str:
+            from full_control import download_file as df
+            return df(url)
+
+        @self.register(name="web_scrape", description="Read content from webpage",
+                      args_schema={"url": "string"})
+        def web_scrape(url: str) -> str:
+            from full_control import web_scrape as ws
+            return ws(url)
+
+        @self.register(name="youtube_search", description="Search YouTube",
+                      args_schema={"query": "string"})
+        def youtube_search(query: str) -> str:
+            from full_control import youtube_search as ys
+            return ys(query)
+
+        @self.register(name="whatsapp_send", description="Send WhatsApp message",
+                      args_schema={"phone": "+91xxxxxxxxxx", "message": "string"})
+        def whatsapp_send(phone: str, message: str) -> str:
+            from full_control import whatsapp_send as ws
+            return ws(phone, message)
+
+        @self.register(name="send_email", description="Send email",
+                      args_schema={"to": "email", "subject": "string", "body": "string"})
+        def send_email(to: str, subject: str, body: str) -> str:
+            from full_control import send_email as se
+            return se(to, subject, body)
+
+        @self.register(name="get_weather", description="Get weather for a city",
+                      args_schema={"city": "string"})
+        def get_weather(city: str = "Coimbatore") -> str:
+            from full_control import get_weather as gw
+            return gw(city)
+
+        @self.register(name="translate_text", description="Translate text",
+                      args_schema={"text": "string", "target_lang": "en/ta/hi/fr"})
+        def translate_text(text: str, target_lang: str = "en") -> str:
+            from full_control import translate_text as tt
+            return tt(text, target_lang)
+
+        @self.register(name="search_files", description="Search files on PC",
+                      args_schema={"query": "filename to search"})
+        def search_files(query: str) -> str:
+            from full_control import search_files as sf
+            return sf(query)
+
+        @self.register(name="get_weather", description="Get current weather",
+                      args_schema={"city": "city name"})
+        def get_weather2(city: str = "Coimbatore") -> str:
+            from full_control import get_weather
+            return get_weather(city)
+        # ── Live model switch ────────────────────────────────────
+        @self.register(
+            name="switch_model",
+            description="Switch AI model without restart",
+            args_schema={"model": "model name"}
+        )
+        def switch_model(model: str) -> str:
+            from core.config import Config
+            model_map = {
+                "mistral": "mistral:latest",
+                "llama": "llama3.2:latest",
+                "llama3": "llama3.2:latest",
+                "phi3": "phi3:mini",
+                "tinyllama": "tinyllama",
+                "gemma": "gemma2:2b",
+                "gemma2": "gemma2:2b",
+                "deepseek": "deepseek-r1:1.5b",
+                "codellama": "codellama:latest",
+            }
+            full_name = model_map.get(model.lower(), model)
+            Config().model = full_name
+            return f"Switched to {full_name}, Sir. Model active immediately."
+        # ── Face Authentication ──────────────────────────────────
+        @self.register(
+            name="register_face",
+            description="Register face for VERONICA authentication",
+            args_schema={"name": "person name"}
+        )
+        def register_face(name: str = "Pranav") -> str:
+            from face_auth import register_face as rf
+            return rf(name)
+
+        @self.register(
+            name="face_login",
+            description="Authenticate user by face recognition",
+            args_schema={}
+        )
+        def face_login() -> str:
+            from face_auth import authenticate_face
+            success, name = authenticate_face(timeout=10)
+            if success:
+                return f"Face recognized — Welcome back, {name}! Access granted, Sir."
+            return "Face not recognized, Sir. Access denied."
+
+        @self.register(
+            name="who_is_there",
+            description="Check who is in front of camera",
+            args_schema={}
+        )
+        def who_is_there() -> str:
+            from face_auth import authenticate_face
+            success, name = authenticate_face(timeout=5)
+            if success:
+                return f"I can see {name} in front of the camera, Sir."
+            return "I see an unknown person in front of the camera, Sir."
+        # ── Mouse control ────────────────────────────────────────
+        @self.register(
+            name="mouse_move",
+            description="Move mouse to position",
+            args_schema={"x": "int", "y": "int"}
+        )
+        def mouse_move(x: int, y: int) -> str:
+            import pyautogui
+            pyautogui.moveTo(x, y, duration=0.3)
+            return f"Mouse moved to ({x},{y}), Sir."
+
+        @self.register(
+            name="mouse_click",
+            description="Click at position",
+            args_schema={"x": "int", "y": "int", "button": "left/right/middle"}
+        )
+        def mouse_click(x: int, y: int, button: str = "left") -> str:
+            import pyautogui
+            pyautogui.click(x, y, button=button)
+            return f"Clicked at ({x},{y}), Sir."
+
+        @self.register(
+            name="double_click",
+            description="Double click at position",
+            args_schema={"x": "int", "y": "int"}
+        )
+        def double_click(x: int, y: int) -> str:
+            import pyautogui
+            pyautogui.doubleClick(x, y)
+            return f"Double clicked at ({x},{y}), Sir."
+
+        @self.register(
+            name="right_click",
+            description="Right click at position",
+            args_schema={"x": "int", "y": "int"}
+        )
+        def right_click(x: int, y: int) -> str:
+            import pyautogui
+            pyautogui.rightClick(x, y)
+            return f"Right clicked at ({x},{y}), Sir."
+
+        @self.register(
+            name="drag_mouse",
+            description="Drag mouse from one position to another",
+            args_schema={"x1": "int", "y1": "int", "x2": "int", "y2": "int"}
+        )
+        def drag_mouse(x1: int, y1: int, x2: int, y2: int) -> str:
+            import pyautogui
+            pyautogui.moveTo(x1, y1, duration=0.3)
+            pyautogui.dragTo(x2, y2, duration=0.5, button='left')
+            return f"Dragged from ({x1},{y1}) to ({x2},{y2}), Sir."
+
+        @self.register(
+            name="scroll",
+            description="Scroll up or down",
+            args_schema={"direction": "up/down", "amount": "int"}
+        )
+        def scroll(direction: str, amount: int = 3) -> str:
+            import pyautogui
+            clicks = amount if direction == "up" else -amount
+            pyautogui.scroll(clicks)
+            return f"Scrolled {direction}, Sir."
+
+        # ── Keyboard control ─────────────────────────────────────
+        @self.register(
+            name="type_text",
+            description="Type text using keyboard",
+            args_schema={"text": "string"}
+        )
+        def type_text(text: str) -> str:
+            import pyautogui
+            pyautogui.write(text, interval=0.04)
+            return f"Typed text, Sir."
+
+        @self.register(
+            name="press_key",
+            description="Press keyboard key or combo",
+            args_schema={"key": "e.g. enter, esc, ctrl+c, alt+f4"}
+        )
+        def press_key(key: str) -> str:
+            import pyautogui
+            if '+' in key:
+                pyautogui.hotkey(*key.split('+'))
+            else:
+                pyautogui.press(key)
+            return f"Pressed {key}, Sir."
+
+        @self.register(
+            name="hotkey",
+            description="Press keyboard hotkey combination",
+            args_schema={"keys": "e.g. ctrl+c, alt+tab, win+d"}
+        )
+        def hotkey(keys: str) -> str:
+            import pyautogui
+            pyautogui.hotkey(*keys.split('+'))
+            return f"Hotkey {keys} pressed, Sir."
+
+        # ── Window control ───────────────────────────────────────
+        @self.register(
+            name="minimize_window",
+            description="Minimize current window",
+            args_schema={}
+        )
+        def minimize_window() -> str:
+            import pyautogui
+            pyautogui.hotkey('win', 'down')
+            return "Window minimized, Sir."
+
+        @self.register(
+            name="maximize_window",
+            description="Maximize current window",
+            args_schema={}
+        )
+        def maximize_window() -> str:
+            import pyautogui
+            pyautogui.hotkey('win', 'up')
+            return "Window maximized, Sir."
+
+        @self.register(
+            name="minimize_all",
+            description="Minimize all windows — show desktop",
+            args_schema={}
+        )
+        def minimize_all() -> str:
+            import pyautogui
+            pyautogui.hotkey('win', 'd')
+            return "All windows minimized, Sir."
+
+        @self.register(
+            name="close_window",
+            description="Close current window",
+            args_schema={}
+        )
+        def close_window() -> str:
+            import pyautogui
+            pyautogui.hotkey('alt', 'f4')
+            return "Window closed, Sir."
+
+        @self.register(
+            name="switch_window",
+            description="Switch between windows — Alt+Tab",
+            args_schema={}
+        )
+        def switch_window() -> str:
+            import pyautogui
+            pyautogui.hotkey('alt', 'tab')
+            return "Switched window, Sir."
+
+        @self.register(
+            name="window_snap_left",
+            description="Snap window to left half",
+            args_schema={}
+        )
+        def window_snap_left() -> str:
+            import pyautogui
+            pyautogui.hotkey('win', 'left')
+            return "Window snapped left, Sir."
+
+        @self.register(
+            name="window_snap_right",
+            description="Snap window to right half",
+            args_schema={}
+        )
+        def window_snap_right() -> str:
+            import pyautogui
+            pyautogui.hotkey('win', 'right')
+            return "Window snapped right, Sir."
+
+        # ── Screen control ───────────────────────────────────────
+        @self.register(
+            name="get_screen_size",
+            description="Get screen resolution",
+            args_schema={}
+        )
+        def get_screen_size() -> str:
+            import pyautogui
+            w, h = pyautogui.size()
+            return f"Screen resolution: {w}x{h}, Sir."
+
+        @self.register(
+            name="get_mouse_position",
+            description="Get current mouse position",
+            args_schema={}
+        )
+        def get_mouse_position() -> str:
+            import pyautogui
+            x, y = pyautogui.position()
+            return f"Mouse is at ({x},{y}), Sir."
+
+        @self.register(
+            name="set_brightness",
+            description="Set screen brightness 0-100",
+            args_schema={"level": "0-100"}
+        )
+        def set_brightness(level: int) -> str:
+            subprocess.run(["powershell", "-Command",
+                f"(Get-WmiObject -Namespace root/WMI -Class WmiMonitorBrightnessMethods)"
+                f".WmiSetBrightness(1,{level})"],
+                capture_output=True)
+            return f"Brightness set to {level}%, Sir."
+
+        # ── File system ──────────────────────────────────────────
+        @self.register(
+            name="move_file",
+            description="Move a file",
+            args_schema={"src": "source path", "dst": "destination path"}
+        )
+        def move_file(src: str, dst: str) -> str:
+            import shutil
+            shutil.move(src, dst)
+            return f"Moved {src} to {dst}, Sir."
+
+        @self.register(
+            name="copy_file",
+            description="Copy a file",
+            args_schema={"src": "source path", "dst": "destination path"}
+        )
+        def copy_file(src: str, dst: str) -> str:
+            import shutil
+            shutil.copy2(src, dst)
+            return f"Copied {src} to {dst}, Sir."
+
+        @self.register(
+            name="rename_file",
+            description="Rename a file",
+            args_schema={"src": "old path", "dst": "new path"}
+        )
+        def rename_file(src: str, dst: str) -> str:
+            import os
+            os.rename(src, dst)
+            return f"Renamed to {dst}, Sir."
+
+        @self.register(
+            name="search_files",
+            description="Search files on PC by name",
+            args_schema={"query": "filename to search", "path": "search path"}
+        )
+        def search_files(query: str, path: str = "C:\\Users\\Admin") -> str:
+            import os
+            results = []
+            for root, dirs, files in os.walk(path):
+                for f in files:
+                    if query.lower() in f.lower():
+                        results.append(os.path.join(root, f))
+                if len(results) >= 10:
+                    break
+            return "\n".join(results) if results else f"No files found: {query}, Sir."
+
+        @self.register(
+            name="open_folder",
+            description="Open a folder in File Explorer",
+            args_schema={"path": "folder path"}
+        )
+        def open_folder(path: str) -> str:
+            subprocess.Popen(["explorer", path])
+            return f"Opened folder: {path}, Sir."
+
+        @self.register(
+            name="get_disk_usage",
+            description="Get disk usage for all drives",
+            args_schema={}
+        )
+        def get_disk_usage() -> str:
+            import psutil
+            lines = []
+            for part in psutil.disk_partitions():
+                try:
+                    usage = psutil.disk_usage(part.mountpoint)
+                    lines.append(f"{part.device} {usage.percent}% used "
+                                f"({usage.used//1024**3}GB/{usage.total//1024**3}GB)")
+                except: pass
+            return "\n".join(lines) or "No drives found, Sir."
+
+        @self.register(
+            name="empty_recycle_bin",
+            description="Empty the Windows recycle bin",
+            args_schema={}
+        )
+        def empty_recycle_bin() -> str:
+            subprocess.run(["powershell", "-Command",
+                "Clear-RecycleBin -Force -ErrorAction SilentlyContinue"],
+                capture_output=True)
+            return "Recycle bin emptied, Sir."
+
+        # ── Network control ──────────────────────────────────────
+        @self.register(
+            name="wifi_control",
+            description="Enable or disable WiFi",
+            args_schema={"action": "enable/disable/status"}
+        )
+        def wifi_control(action: str) -> str:
+            if action == "disable":
+                subprocess.run(["netsh", "interface", "set", "interface",
+                               "Wi-Fi", "disable"], capture_output=True)
+                return "WiFi disabled, Sir."
+            elif action == "enable":
+                subprocess.run(["netsh", "interface", "set", "interface",
+                               "Wi-Fi", "enable"], capture_output=True)
+                return "WiFi enabled, Sir."
+            else:
+                r = subprocess.run(["netsh", "wlan", "show", "interfaces"],
+                                  capture_output=True, text=True)
+                return r.stdout[:200]
+
+        @self.register(
+            name="network_info",
+            description="Get IP address and network info",
+            args_schema={}
+        )
+        def network_info() -> str:
+            import psutil, socket
+            hostname = socket.gethostname()
+            ip = socket.gethostbyname(hostname)
+            net = psutil.net_io_counters()
+            return (f"Hostname: {hostname} | IP: {ip} | "
+                   f"Sent: {net.bytes_sent//1024//1024}MB | "
+                   f"Received: {net.bytes_recv//1024//1024}MB, Sir.")
+
+        @self.register(
+            name="ping",
+            description="Ping a host to check connectivity",
+            args_schema={"host": "hostname or IP"}
+        )
+        def ping(host: str) -> str:
+            r = subprocess.run(["ping", "-n", "3", host],
+                              capture_output=True, text=True)
+            lines = [l for l in r.stdout.splitlines() if l.strip()]
+            return "\n".join(lines[-3:]) if lines else f"Cannot ping {host}, Sir."
+
+        # ── Power control ────────────────────────────────────────
+        @self.register(
+            name="shutdown_pc",
+            description="Shutdown the PC",
+            args_schema={"delay": "seconds before shutdown"}
+        )
+        def shutdown_pc(delay: int = 10) -> str:
+            subprocess.run(["shutdown", "/s", "/t", str(delay)])
+            return f"PC will shutdown in {delay} seconds, Sir."
+
+        @self.register(
+            name="restart_pc",
+            description="Restart the PC",
+            args_schema={"delay": "seconds before restart"}
+        )
+        def restart_pc(delay: int = 10) -> str:
+            subprocess.run(["shutdown", "/r", "/t", str(delay)])
+            return f"PC will restart in {delay} seconds, Sir."
+
+        @self.register(
+            name="cancel_shutdown",
+            description="Cancel scheduled shutdown",
+            args_schema={}
+        )
+        def cancel_shutdown() -> str:
+            subprocess.run(["shutdown", "/a"])
+            return "Shutdown cancelled, Sir."
+
+        @self.register(
+            name="sleep_pc",
+            description="Put PC to sleep",
+            args_schema={}
+        )
+        def sleep_pc() -> str:
+            subprocess.run(["powershell", "-Command",
+                "Add-Type -Assembly System.Windows.Forms; "
+                "[System.Windows.Forms.Application]::SetSuspendState('Suspend',$false,$false)"],
+                capture_output=True)
+            return "PC going to sleep, Sir."
+
+        @self.register(
+            name="hibernate_pc",
+            description="Hibernate the PC",
+            args_schema={}
+        )
+        def hibernate_pc() -> str:
+            subprocess.run(["shutdown", "/h"])
+            return "PC hibernating, Sir."
+
+        @self.register(
+            name="battery_status",
+            description="Get battery status and percentage",
+            args_schema={}
+        )
+        def battery_status() -> str:
+            import psutil
+            b = psutil.sensors_battery()
+            if b:
+                s = "Charging" if b.power_plugged else "Discharging"
+                return f"Battery: {b.percent:.0f}% — {s}, Sir."
+            return "No battery detected, Sir."
+
+        # ── Process control ──────────────────────────────────────
+        @self.register(
+            name="list_processes",
+            description="List all running processes",
+            args_schema={}
+        )
+        def list_processes() -> str:
+            import psutil
+            procs = []
+            for p in psutil.process_iter(['name','cpu_percent','memory_percent']):
+                try:
+                    if p.info['cpu_percent'] > 0.1:
+                        procs.append(
+                            f"{p.info['name']} CPU:{p.info['cpu_percent']:.1f}% "
+                            f"RAM:{p.info['memory_percent']:.1f}%"
+                        )
+                except: pass
+            return "\n".join(procs[:15]) or "No active processes, Sir."
+
+        @self.register(
+            name="kill_process",
+            description="Kill a process by name",
+            args_schema={"name": "process name e.g. chrome.exe"}
+        )
+        def kill_process(name: str) -> str:
+            if not name.endswith('.exe'):
+                name += '.exe'
+            r = subprocess.run(["taskkill", "/f", "/im", name],
+                              capture_output=True, text=True)
+            if "SUCCESS" in r.stdout:
+                return f"Killed {name}, Sir."
+            return f"Could not kill {name}, Sir."
+
+        @self.register(
+            name="get_installed_apps",
+            description="List all installed applications",
+            args_schema={}
+        )
+        def get_installed_apps() -> str:
+            r = subprocess.run(["powershell", "-Command",
+                "Get-StartApps | Select-Object Name | Sort-Object Name | Select-Object -First 30"],
+                capture_output=True, text=True)
+            return r.stdout[:500] or "Could not list apps, Sir."
+
+        # ── Clipboard ────────────────────────────────────────────
+        @self.register(
+            name="get_clipboard",
+            description="Get clipboard content",
+            args_schema={}
+        )
+        def get_clipboard() -> str:
+            import pyperclip
+            text = pyperclip.paste()
+            return f"Clipboard: {text[:200]}, Sir." if text else "Clipboard is empty, Sir."
+
+        @self.register(
+            name="set_clipboard",
+            description="Set clipboard content",
+            args_schema={"text": "string"}
+        )
+        def set_clipboard(text: str) -> str:
+            import pyperclip
+            pyperclip.copy(text)
+            return "Copied to clipboard, Sir."
+
+        # ── Communication ────────────────────────────────────────
+        @self.register(
+            name="open_gmail",
+            description="Open Gmail in browser",
+            args_schema={}
+        )
+        def open_gmail() -> str:
+            subprocess.Popen('start chrome "https://mail.google.com"', shell=True)
+            return "Gmail opened, Sir."
+
+        @self.register(
+            name="whatsapp_send",
+            description="Send WhatsApp message via WhatsApp Web",
+            args_schema={"phone": "+91xxxxxxxxxx", "message": "string"}
+        )
+        def whatsapp_send(phone: str, message: str) -> str:
+            import urllib.parse, time
+            clean = phone.replace('+','').replace(' ','').replace('-','')
+            msg = urllib.parse.quote(message)
+            url = f"https://web.whatsapp.com/send?phone={clean}&text={msg}"
+            subprocess.Popen(f'start chrome "{url}"', shell=True)
+            return f"WhatsApp message prepared for {phone}, Sir."
+
+        @self.register(
+            name="send_email",
+            description="Send email via Gmail SMTP",
+            args_schema={"to": "email", "subject": "string", "body": "string"}
+        )
+        def send_email(to: str, subject: str, body: str) -> str:
+            import smtplib, os
+            from email.mime.text import MIMEText
+            from email.mime.multipart import MIMEMultipart
+            sender = os.getenv("EMAIL_ADDRESS", "")
+            pwd = os.getenv("EMAIL_PASSWORD", "")
+            if not sender or not pwd:
+                return "Email not configured, Sir. Set EMAIL_ADDRESS and EMAIL_PASSWORD in .env"
+            try:
+                msg = MIMEMultipart()
+                msg['From'] = sender
+                msg['To'] = to
+                msg['Subject'] = subject
+                msg.attach(MIMEText(body, 'plain'))
+                with smtplib.SMTP_SSL('smtp.gmail.com', 465) as s:
+                    s.login(sender, pwd)
+                    s.send_message(msg)
+                return f"Email sent to {to}, Sir."
+            except Exception as e:
+                return f"Email error: {e}"
+
+        # ── Weather & utils ──────────────────────────────────────
+        @self.register(
+            name="get_weather",
+            description="Get weather for a city",
+            args_schema={"city": "city name"}
+        )
+        def get_weather(city: str = "Coimbatore") -> str:
+            import requests
+            try:
+                r = requests.get(f"https://wttr.in/{city}?format=3", timeout=8)
+                return r.text.strip() + ", Sir."
+            except Exception as e:
+                return f"Weather error: {e}"
+
+        @self.register(
+            name="translate_text",
+            description="Translate text to another language",
+            args_schema={"text": "string", "target_lang": "en/ta/hi/fr/de/ja"}
+        )
+        def translate_text(text: str, target_lang: str = "en") -> str:
+            import urllib.parse, urllib.request, json
+            try:
+                url = (f"https://translate.googleapis.com/translate_a/single"
+                      f"?client=gtx&sl=auto&tl={target_lang}&dt=t"
+                      f"&q={urllib.parse.quote(text)}")
+                r = urllib.request.urlopen(url, timeout=8)
+                data = json.loads(r.read())
+                return data[0][0][0]
+            except Exception as e:
+                return f"Translation error: {e}"

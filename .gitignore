@@ -1,15 +1,23 @@
-node_modules/
-desktop/node_modules/
+# Face recognition data
+agent/data/faces/
+agent/data/face_model.yml
+agent/data/face_labels.txt
+agent/data/haarcascade.xml
 
-venv/
-.venv/
+# Runtime/generated data
+agent/data/memory.json
+agent/data/reminders.json
+agent/data/usage_log.json
+agent/data/decisions_log.json
+agent/data/emotion_state.json
 
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
+.venv/
+venv/
 
+# Environment/secrets
 .env
-
-dist/
-build/
-
-*.log
+*.key
+*.pem

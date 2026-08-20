@@ -145,8 +145,8 @@ def activate_performance_mode() -> str:
     kill_apps("chrome.exe", "msedge.exe", "OneDrive.exe",
               "SearchApp.exe", "SearchIndexer.exe")
 
-    # Set volume to 50%
-    set_volume(50)
+    # Set volume to 70%
+    set_volume(70)
 
     # Switch to most powerful available model
     config_file = Path("D:/jarvis-agent/agent/core/config.py")

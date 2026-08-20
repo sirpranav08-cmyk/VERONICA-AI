@@ -1,0 +1,26 @@
+[
+  {
+    "trigger": "CPU=96%",
+    "decision": "High CPU alert",
+    "action": "Notified \u2014 top process: None",
+    "time": "2026-08-19T10:08:35.549908"
+  },
+  {
+    "trigger": "RAM=90%",
+    "decision": "RAM critical \u2014 killing heavy apps",
+    "action": "Killed: ['chrome.exe', 'chrome.exe']",
+    "time": "2026-08-19T10:12:46.359425"
+  },
+  {
+    "trigger": "CPU=100%",
+    "decision": "High CPU alert",
+    "action": "Notified \u2014 top process: System Idle Process",
+    "time": "2026-08-19T10:13:51.462162"
+  },
+  {
+    "trigger": "RAM=91%",
+    "decision": "RAM critical \u2014 killing heavy apps",
+    "action": "Killed: ['chrome.exe']",
+    "time": "2026-08-19T10:18:00.418047"
+  }
+]

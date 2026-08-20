@@ -1,7 +1,7 @@
 [
   {
     "message": "leetcode contest on every sunday at 07:30",
-    "datetime": "2026-08-07T07:30:00",
+    "datetime": "2026-08-21T07:30:00",
     "created": "2026-06-05T10:00:40.485538",
     "done": false
   },
@@ -15,6 +15,12 @@
     "message": "codechef contest on monday at 19:30",
     "datetime": "2026-06-08T19:30:00",
     "created": "2026-06-07T09:26:40.424708",
+    "done": true
+  },
+  {
+    "message": "to complet java,daa viov on today",
+    "datetime": "2026-08-10T09:00:00",
+    "created": "2026-08-10T15:05:22.597658",
     "done": true
   }
 ]
