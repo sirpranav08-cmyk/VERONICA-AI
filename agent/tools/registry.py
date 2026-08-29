@@ -525,7 +525,7 @@ class ToolRegistry:
             })
             reminders_file.write_text(json.dumps(reminders, indent=2))
             return f"Reminder set: '{message}' at {target_dt.strftime('%B %d %Y at %I:%M %p')}, Sir."
-
+        
         # ── Get reminders ────────────────────────────────────────
         @self.register(
             name="get_reminders",
@@ -1522,3 +1522,227 @@ class ToolRegistry:
                 return data[0][0][0]
             except Exception as e:
                 return f"Translation error: {e}"
+        @self.register(
+            name="add_shortcut",
+            description="Save an app shortcut",
+            args_schema={"name": "shortcut name", "app": "app name"}
+        )
+        @self.register(
+            name="add_shortcut",
+            description="Save an app shortcut",
+            args_schema={"name": "shortcut name", "app": "app name"}
+        )
+        @self.register(
+            name="add_shortcut",
+            description="Save an app shortcut",
+            args_schema={"name": "shortcut name", "app": "app name"}
+        )
+        @self.register(
+            name="add_shortcut",
+            description="Save an app shortcut",
+            args_schema={"name": "shortcut name", "app": "app name"}
+        )
+        def add_shortcut(name: str, app: str) -> str:
+            from siri_features import add_shortcut as _add
+            return _add(name, "open_app", app=app)
+
+        @self.register(
+            name="list_shortcuts",
+            description="List all saved shortcuts",
+            args_schema={}
+        )
+        def list_shortcuts() -> str:
+            from siri_features import list_shortcuts as _list
+            return _list()
+
+        @self.register(
+            name="how_are_you",
+            description="VERONICA shares her emotional state",
+            args_schema={}
+        )
+        def how_are_you() -> str:
+            try:
+                from emotions import get_mood_summary
+                return get_mood_summary()
+            except:
+                return "I am functioning well, Sir."
+
+        @self.register(
+            name="set_emotion",
+            description="Set VERONICA emotion",
+            args_schema={"emotion": "happy/sad/excited/calm/tired/proud"}
+        )
+        def set_emotion_tool(emotion: str) -> str:
+            try:
+                from emotions import set_emotion, EMOTIONAL_REACTIONS
+                if set_emotion(emotion):
+                    emoji = EMOTIONAL_REACTIONS.get(emotion, "💙")
+                    return f"I am now feeling {emotion} {emoji}, Sir."
+                return f"Unknown emotion: {emotion}, Sir."
+            except Exception as e:
+                return f"Error: {e}"
+
+        @self.register(
+            name="show_decisions",
+            description="Show recent autonomous decisions",
+            args_schema={}
+        )
+        def show_decisions() -> str:
+            try:
+                from autonomous import get_recent_decisions
+                decisions = get_recent_decisions(5)
+                if not decisions:
+                    return "No autonomous decisions yet, Sir."
+                lines = ["Recent decisions, Sir:"]
+                for d in decisions:
+                    lines.append(f"- {d['decision']} → {d['action']}")
+                return "\n".join(lines)
+            except:
+                return "No decisions logged yet, Sir."
+            
+                # ── Calendar ─────────────────────────────────────────────
+        @self.register(
+            name="open_calendar",
+            description="Open Windows Calendar",
+            args_schema={}
+        )
+        def open_calendar() -> str:
+            subprocess.Popen("start outlookcal:", shell=True)
+            return "Calendar opened, Sir."
+        @self.register(
+            name="rational_state",
+            description="Show rational agent current state and decisions",
+            args_schema={}
+        )
+        def rational_state() -> str:
+            try:
+                import rational_agent
+                instance = rational_agent.get_instance()
+                if instance:
+                    instance.perceive()
+                    return instance.get_state_summary()
+                return "Rational agent not running, Sir."
+            except Exception as e:
+                return f"Error: {e}"
+        # ── Maps ─────────────────────────────────────────────────
+        @self.register(
+            name="open_maps",
+            description="Open Google Maps for a location",
+            args_schema={"location": "place to find"}
+        )
+        def open_maps(location: str) -> str:
+            import urllib.parse
+            url = f"https://www.google.com/maps/search/{urllib.parse.quote(location)}"
+            subprocess.Popen(f'start chrome "{url}"', shell=True)
+            return f"Opening maps for {location}, Sir."
+
+        # ── WhatsApp message ─────────────────────────────────────
+        @self.register(
+            name="whatsapp_call",
+            description="Open WhatsApp call with a contact",
+            args_schema={"phone": "+91xxxxxxxxxx"}
+        )
+        def whatsapp_call(phone: str) -> str:
+            clean = phone.replace('+','').replace(' ','').replace('-','')
+            url = f"https://web.whatsapp.com/send?phone={clean}"
+            subprocess.Popen(f'start chrome "{url}"', shell=True)
+            return f"Opening WhatsApp for {phone}, Sir."
+
+        # ── Screen record ─────────────────────────────────────────
+        @self.register(
+            name="record_screen",
+            description="Start screen recording using Windows built-in",
+            args_schema={}
+        )
+        def record_screen() -> str:
+            import pyautogui
+            pyautogui.hotkey('win', 'alt', 'r')
+            return "Screen recording started, Sir. Press Win+Alt+R to stop."
+
+        # ── Clipboard history ────────────────────────────────────
+        @self.register(
+            name="clipboard_history",
+            description="Open Windows clipboard history",
+            args_schema={}
+        )
+        def clipboard_history() -> str:
+            import pyautogui
+            pyautogui.hotkey('win', 'v')
+            return "Clipboard history opened, Sir."
+
+        # ── Virtual desktop ───────────────────────────────────────
+        @self.register(
+            name="new_desktop",
+            description="Create new virtual desktop",
+            args_schema={}
+        )
+        def new_desktop() -> str:
+            import pyautogui
+            pyautogui.hotkey('win', 'ctrl', 'd')
+            return "New virtual desktop created, Sir."
+
+        # ── Task view ────────────────────────────────────────────
+        @self.register(
+            name="task_view",
+            description="Open Windows task view",
+            args_schema={}
+        )
+        def task_view() -> str:
+            import pyautogui
+            pyautogui.hotkey('win', 'tab')
+            return "Task view opened, Sir."
+
+        # ── Run command ──────────────────────────────────────────
+        @self.register(
+            name="run_command",
+            description="Open Windows Run dialog",
+            args_schema={"command": "command to run e.g. calc, notepad"}
+        )
+        def run_command(command: str) -> str:
+            import pyautogui, time
+            pyautogui.hotkey('win', 'r')
+            time.sleep(0.5)
+            pyautogui.write(command, interval=0.05)
+            pyautogui.press('enter')
+            return f"Ran command: {command}, Sir."
+
+        # ── Control Panel ────────────────────────────────────────
+        @self.register(
+            name="open_control_panel",
+            description="Open Windows Control Panel",
+            args_schema={}
+        )
+        def open_control_panel() -> str:
+            subprocess.Popen("control", shell=True)
+            return "Control Panel opened, Sir."
+
+        # ── Device Manager ───────────────────────────────────────
+        @self.register(
+            name="open_device_manager",
+            description="Open Device Manager",
+            args_schema={}
+        )
+        def open_device_manager() -> str:
+            subprocess.Popen("devmgmt.msc", shell=True)
+            return "Device Manager opened, Sir."
+
+        # ── Ask cloud AI ─────────────────────────────────────────
+        @self.register(
+            name="ask_gemini",
+            description="Ask Google Gemini AI a question",
+            args_schema={"question": "string"}
+        )
+        async def ask_gemini_tool(question: str) -> str:
+            from multi_model import ask_gemini
+            result = await ask_gemini(question)
+            return result or "Gemini not available, Sir."
+
+        @self.register(
+            name="ask_groq",
+            description="Ask Groq LLaMA a question (ultrafast)",
+            args_schema={"question": "string"}
+        )
+        async def ask_groq_tool(question: str) -> str:
+            from multi_model import ask_groq
+            result = await ask_groq(question)
+            return result or "Groq not available, Sir."

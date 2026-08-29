@@ -1,0 +1,27 @@
+{
+  "last project": {
+    "action": "open_folder",
+    "path": "D:/jarvis-agent"
+  },
+  "my code": {
+    "action": "open_app",
+    "app": "vscode"
+  },
+  "my notes": {
+    "action": "open_app",
+    "app": "notepad"
+  },
+  "my music": {
+    "action": "play_spotify"
+  },
+  "my email": {
+    "action": "open_gmail"
+  },
+  "my tasks": {
+    "action": "get_reminders"
+  },
+  "my browser": {
+    "action": "open_app",
+    "app": "chrome"
+  }
+}

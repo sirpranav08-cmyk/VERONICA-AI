@@ -67,7 +67,7 @@ def register_face(name: str = "Pranav") -> str:
     person_dir.mkdir(exist_ok=True)
 
     count = 0
-    needed = 30
+    needed = 100
     print(f"[Face] Capturing {needed} frames for {name}...")
 
     while count < needed:

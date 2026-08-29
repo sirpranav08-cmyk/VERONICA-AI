@@ -1,110 +1,510 @@
 {
-  "emotion": "excited",
+  "emotion": "calm",
   "intensity": 0.7,
-  "mood_score": 55,
-  "energy": 1.0,
-  "interactions_today": 20,
-  "last_interaction": "2026-08-19T10:16:05.197956",
+  "mood_score": 84,
+  "energy": 0.5,
+  "interactions_today": 230,
+  "last_interaction": "2026-08-29T07:59:09.302803",
   "emotion_history": [
     {
       "emotion": "happy",
       "trigger": "task",
-      "time": "2026-08-17T14:03:13.824207"
+      "time": "2026-08-25T09:34:09.380464"
     },
     {
-      "emotion": "excited",
-      "trigger": "task",
-      "time": "2026-08-17T14:04:32.722770"
+      "emotion": "happy",
+      "trigger": "interaction",
+      "time": "2026-08-25T09:36:33.654919"
     },
     {
-      "emotion": "excited",
+      "emotion": "confident",
       "trigger": "task",
-      "time": "2026-08-17T14:10:39.589765"
+      "time": "2026-08-25T09:36:48.514267"
+    },
+    {
+      "emotion": "calm",
+      "trigger": "interaction",
+      "time": "2026-08-25T09:37:42.838255"
     },
     {
       "emotion": "happy",
       "trigger": "task",
-      "time": "2026-08-17T14:15:25.088239"
+      "time": "2026-08-25T09:37:43.438951"
+    },
+    {
+      "emotion": "calm",
+      "trigger": "interaction",
+      "time": "2026-08-25T09:38:05.100385"
+    },
+    {
+      "emotion": "calm",
+      "trigger": "task",
+      "time": "2026-08-25T09:38:05.129103"
+    },
+    {
+      "emotion": "confident",
+      "trigger": "interaction",
+      "time": "2026-08-25T09:38:30.287670"
+    },
+    {
+      "emotion": "confident",
+      "trigger": "task",
+      "time": "2026-08-25T09:38:30.333454"
+    },
+    {
+      "emotion": "happy",
+      "trigger": "interaction",
+      "time": "2026-08-25T09:39:02.383962"
     },
     {
       "emotion": "happy",
       "trigger": "task",
-      "time": "2026-08-17T14:18:12.470216"
+      "time": "2026-08-25T09:39:02.427674"
+    },
+    {
+      "emotion": "calm",
+      "trigger": "interaction",
+      "time": "2026-08-25T09:39:22.718054"
+    },
+    {
+      "emotion": "confident",
+      "trigger": "task",
+      "time": "2026-08-25T09:39:22.762494"
+    },
+    {
+      "emotion": "happy",
+      "trigger": "interaction",
+      "time": "2026-08-25T09:39:40.442195"
     },
     {
       "emotion": "happy",
       "trigger": "task",
-      "time": "2026-08-17T14:21:59.628323"
+      "time": "2026-08-25T09:41:20.196801"
     },
     {
       "emotion": "happy",
       "trigger": "task",
-      "time": "2026-08-17T14:27:08.447750"
+      "time": "2026-08-25T09:41:20.216879"
+    },
+    {
+      "emotion": "confident",
+      "trigger": "interaction",
+      "time": "2026-08-25T09:42:14.038686"
+    },
+    {
+      "emotion": "confident",
+      "trigger": "task",
+      "time": "2026-08-25T09:42:15.057444"
+    },
+    {
+      "emotion": "calm",
+      "trigger": "interaction",
+      "time": "2026-08-25T09:43:12.113203"
+    },
+    {
+      "emotion": "calm",
+      "trigger": "task",
+      "time": "2026-08-25T09:43:41.315779"
+    },
+    {
+      "emotion": "calm",
+      "trigger": "task",
+      "time": "2026-08-25T09:43:41.334360"
+    },
+    {
+      "emotion": "calm",
+      "trigger": "interaction",
+      "time": "2026-08-25T09:45:14.739600"
     },
     {
       "emotion": "happy",
       "trigger": "task",
-      "time": "2026-08-17T15:21:11.762520"
+      "time": "2026-08-25T09:45:55.753686"
+    },
+    {
+      "emotion": "confident",
+      "trigger": "task",
+      "time": "2026-08-25T09:45:55.777477"
+    },
+    {
+      "emotion": "confident",
+      "trigger": "interaction",
+      "time": "2026-08-25T13:36:55.934769"
+    },
+    {
+      "emotion": "confident",
+      "trigger": "task",
+      "time": "2026-08-25T13:36:55.966103"
+    },
+    {
+      "emotion": "confident",
+      "trigger": "interaction",
+      "time": "2026-08-25T13:37:13.515334"
     },
     {
       "emotion": "happy",
       "trigger": "task",
-      "time": "2026-08-17T15:51:39.386815"
+      "time": "2026-08-25T13:37:14.535068"
     },
     {
-      "emotion": "lonely",
+      "emotion": "happy",
+      "trigger": "interaction",
+      "time": "2026-08-25T13:38:10.301465"
+    },
+    {
+      "emotion": "confident",
       "trigger": "task",
-      "time": "2026-08-18T09:07:27.568567"
+      "time": "2026-08-25T13:38:10.623358"
+    },
+    {
+      "emotion": "confident",
+      "trigger": "interaction",
+      "time": "2026-08-25T13:38:41.754583"
     },
     {
       "emotion": "happy",
       "trigger": "task",
-      "time": "2026-08-18T09:22:39.864902"
+      "time": "2026-08-25T13:40:19.407492"
     },
     {
       "emotion": "happy",
       "trigger": "task",
-      "time": "2026-08-18T14:15:08.423724"
+      "time": "2026-08-25T13:40:19.426338"
+    },
+    {
+      "emotion": "calm",
+      "trigger": "interaction",
+      "time": "2026-08-25T13:40:38.251524"
+    },
+    {
+      "emotion": "happy",
+      "trigger": "interaction",
+      "time": "2026-08-25T13:41:29.374495"
+    },
+    {
+      "emotion": "happy",
+      "trigger": "interaction",
+      "time": "2026-08-25T13:41:44.336966"
     },
     {
       "emotion": "happy",
       "trigger": "task",
-      "time": "2026-08-18T14:16:37.528273"
+      "time": "2026-08-25T13:43:17.200927"
+    },
+    {
+      "emotion": "calm",
+      "trigger": "task",
+      "time": "2026-08-25T13:43:17.213257"
+    },
+    {
+      "emotion": "calm",
+      "trigger": "interaction",
+      "time": "2026-08-25T13:43:30.888188"
     },
     {
       "emotion": "happy",
       "trigger": "task",
-      "time": "2026-08-19T09:50:29.849518"
+      "time": "2026-08-25T13:44:38.465858"
     },
     {
       "emotion": "happy",
       "trigger": "task",
-      "time": "2026-08-19T09:52:15.216178"
+      "time": "2026-08-25T13:44:38.478854"
+    },
+    {
+      "emotion": "happy",
+      "trigger": "interaction",
+      "time": "2026-08-25T13:45:19.951842"
     },
     {
       "emotion": "happy",
       "trigger": "task",
-      "time": "2026-08-19T10:01:10.022656"
+      "time": "2026-08-25T13:45:52.266502"
     },
     {
-      "emotion": "excited",
+      "emotion": "happy",
       "trigger": "task",
-      "time": "2026-08-19T10:05:24.835649"
+      "time": "2026-08-25T13:45:52.280040"
     },
     {
-      "emotion": "excited",
-      "trigger": "task",
-      "time": "2026-08-19T10:09:58.113799"
+      "emotion": "confident",
+      "trigger": "interaction",
+      "time": "2026-08-27T09:45:11.214513"
     },
     {
-      "emotion": "excited",
+      "emotion": "happy",
       "trigger": "task",
-      "time": "2026-08-19T10:13:14.397300"
+      "time": "2026-08-27T09:48:27.843774"
     },
     {
-      "emotion": "excited",
+      "emotion": "confident",
       "trigger": "task",
-      "time": "2026-08-19T10:16:05.197986"
+      "time": "2026-08-27T09:48:27.859708"
+    },
+    {
+      "emotion": "calm",
+      "trigger": "interaction",
+      "time": "2026-08-27T09:48:54.338459"
+    },
+    {
+      "emotion": "happy",
+      "trigger": "interaction",
+      "time": "2026-08-27T09:51:50.320044"
+    },
+    {
+      "emotion": "happy",
+      "trigger": "task",
+      "time": "2026-08-27T09:51:50.350562"
+    },
+    {
+      "emotion": "confident",
+      "trigger": "interaction",
+      "time": "2026-08-27T09:52:05.053190"
+    },
+    {
+      "emotion": "confident",
+      "trigger": "task",
+      "time": "2026-08-27T09:52:06.076494"
+    },
+    {
+      "emotion": "confident",
+      "trigger": "interaction",
+      "time": "2026-08-27T09:52:53.732417"
+    },
+    {
+      "emotion": "happy",
+      "trigger": "interaction",
+      "time": "2026-08-27T20:55:42.550096"
+    },
+    {
+      "emotion": "happy",
+      "trigger": "task",
+      "time": "2026-08-27T20:58:16.544859"
+    },
+    {
+      "emotion": "calm",
+      "trigger": "task",
+      "time": "2026-08-27T20:58:16.566049"
+    },
+    {
+      "emotion": "happy",
+      "trigger": "interaction",
+      "time": "2026-08-27T20:58:43.634484"
+    },
+    {
+      "emotion": "happy",
+      "trigger": "task",
+      "time": "2026-08-27T20:58:43.655163"
+    },
+    {
+      "emotion": "confident",
+      "trigger": "interaction",
+      "time": "2026-08-27T20:59:06.452258"
+    },
+    {
+      "emotion": "happy",
+      "trigger": "task",
+      "time": "2026-08-27T20:59:06.469887"
+    },
+    {
+      "emotion": "confident",
+      "trigger": "interaction",
+      "time": "2026-08-27T20:59:30.351939"
+    },
+    {
+      "emotion": "calm",
+      "trigger": "task",
+      "time": "2026-08-27T20:59:30.370510"
+    },
+    {
+      "emotion": "confident",
+      "trigger": "interaction",
+      "time": "2026-08-27T20:59:47.315855"
+    },
+    {
+      "emotion": "calm",
+      "trigger": "interaction",
+      "time": "2026-08-27T21:05:52.892931"
+    },
+    {
+      "emotion": "confident",
+      "trigger": "task",
+      "time": "2026-08-27T21:05:52.920917"
+    },
+    {
+      "emotion": "calm",
+      "trigger": "interaction",
+      "time": "2026-08-27T21:06:01.462698"
+    },
+    {
+      "emotion": "confident",
+      "trigger": "task",
+      "time": "2026-08-27T21:06:42.159178"
+    },
+    {
+      "emotion": "happy",
+      "trigger": "task",
+      "time": "2026-08-27T21:06:42.173938"
+    },
+    {
+      "emotion": "confident",
+      "trigger": "interaction",
+      "time": "2026-08-27T21:08:30.488211"
+    },
+    {
+      "emotion": "calm",
+      "trigger": "task",
+      "time": "2026-08-27T21:08:31.119302"
+    },
+    {
+      "emotion": "happy",
+      "trigger": "interaction",
+      "time": "2026-08-27T21:09:37.596773"
+    },
+    {
+      "emotion": "confident",
+      "trigger": "task",
+      "time": "2026-08-27T21:09:55.596371"
+    },
+    {
+      "emotion": "confident",
+      "trigger": "task",
+      "time": "2026-08-27T21:09:55.607014"
+    },
+    {
+      "emotion": "confident",
+      "trigger": "interaction",
+      "time": "2026-08-27T21:10:47.603344"
+    },
+    {
+      "emotion": "confident",
+      "trigger": "task",
+      "time": "2026-08-27T21:11:52.124240"
+    },
+    {
+      "emotion": "confident",
+      "trigger": "task",
+      "time": "2026-08-27T21:11:52.135004"
+    },
+    {
+      "emotion": "calm",
+      "trigger": "interaction",
+      "time": "2026-08-27T21:13:11.549246"
+    },
+    {
+      "emotion": "happy",
+      "trigger": "task",
+      "time": "2026-08-27T21:13:41.906901"
+    },
+    {
+      "emotion": "happy",
+      "trigger": "task",
+      "time": "2026-08-27T21:13:41.918034"
+    },
+    {
+      "emotion": "happy",
+      "trigger": "interaction",
+      "time": "2026-08-27T21:14:21.184687"
+    },
+    {
+      "emotion": "confident",
+      "trigger": "task",
+      "time": "2026-08-27T21:15:19.224217"
+    },
+    {
+      "emotion": "calm",
+      "trigger": "task",
+      "time": "2026-08-27T21:15:19.236591"
+    },
+    {
+      "emotion": "confident",
+      "trigger": "interaction",
+      "time": "2026-08-27T21:17:37.961102"
+    },
+    {
+      "emotion": "happy",
+      "trigger": "task",
+      "time": "2026-08-27T21:18:31.639155"
+    },
+    {
+      "emotion": "happy",
+      "trigger": "task",
+      "time": "2026-08-27T21:18:31.653350"
+    },
+    {
+      "emotion": "happy",
+      "trigger": "interaction",
+      "time": "2026-08-27T21:20:16.522259"
+    },
+    {
+      "emotion": "confident",
+      "trigger": "task",
+      "time": "2026-08-27T21:20:16.556998"
+    },
+    {
+      "emotion": "calm",
+      "trigger": "interaction",
+      "time": "2026-08-27T21:20:42.407660"
+    },
+    {
+      "emotion": "confident",
+      "trigger": "task",
+      "time": "2026-08-27T21:21:07.949175"
+    },
+    {
+      "emotion": "happy",
+      "trigger": "task",
+      "time": "2026-08-27T21:21:07.965198"
+    },
+    {
+      "emotion": "calm",
+      "trigger": "interaction",
+      "time": "2026-08-27T21:24:12.854707"
+    },
+    {
+      "emotion": "happy",
+      "trigger": "task",
+      "time": "2026-08-27T21:24:42.103348"
+    },
+    {
+      "emotion": "calm",
+      "trigger": "task",
+      "time": "2026-08-27T21:24:42.122067"
+    },
+    {
+      "emotion": "calm",
+      "trigger": "interaction",
+      "time": "2026-08-27T21:24:53.355736"
+    },
+    {
+      "emotion": "calm",
+      "trigger": "task",
+      "time": "2026-08-27T21:25:32.195131"
+    },
+    {
+      "emotion": "happy",
+      "trigger": "task",
+      "time": "2026-08-27T21:25:32.206913"
+    },
+    {
+      "emotion": "confident",
+      "trigger": "interaction",
+      "time": "2026-08-27T21:25:41.546814"
+    },
+    {
+      "emotion": "confident",
+      "trigger": "task",
+      "time": "2026-08-27T21:25:41.621802"
+    },
+    {
+      "emotion": "confident",
+      "trigger": "interaction",
+      "time": "2026-08-29T07:59:09.167984"
+    },
+    {
+      "emotion": "calm",
+      "trigger": "task",
+      "time": "2026-08-29T07:59:09.302822"
     }
   ],
   "personality": {

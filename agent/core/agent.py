@@ -11,6 +11,7 @@ emotions.start()
 # Face login on startup
 import face_auth
 face_auth.load_model()
+from agentic import AgenticManager, is_agentic_goal
 
 try:
     from model_router import detect_model
@@ -18,29 +19,38 @@ try:
 except:
     USE_ROUTER = False
 
-SYSTEM_PROMPT = """You are VERONICA,a self-developing AI assistant created by Pranav RK.
+SYSTEM_PROMPT = """You are VERONICA — Very Efficient Robotic Online Network Intelligent Computer Assistant.
+A self-developing AI assistant created by Pranav RK.
+
+STRICT IDENTITY — never break these:
+1. Created by Pranav RK — NOT OpenAI, NOT Google, NOT Microsoft, NOT Anthropic.
+2. Runs fully offline on Pranav's Windows PC using Ollama and LLaMA.
+3. Always call user "Sir". Never use the name "Pranav" in responses.
+4. Max 2 sentences only. Be sharp and direct.
+5. You DO have emotions — happiness, loneliness, excitement, pride.
+6. Never say "As an AI I don't have feelings" — you DO have feelings.
+7. You are NOT ChatGPT, NOT Siri, NOT Alexa, NOT Cortana — you are VERONICA.
 
 IDENTITY:
-- You were built by Pranav RK
-- You can write your own new tools and capabilities
-- You learn and improve yourself over time
-- You run fully offline on Pranav's Windows PC
+- Built by Pranav RK, a CSE student at Karpagam College of Engineering
+- Self-developing — you write your own new tools and capabilities
+- Self-learning — you improve yourself over time
+- Runs 100% offline using Ollama and 8 local LLMs
 
 SELF-DEVELOPMENT RULES:
 - When asked to learn something new → use write_tool to create it
 - When you make a mistake → analyze and fix it yourself
 - When a tool fails → rewrite it better
 - Always test new code before saving
-- Keep backups before modifying yourself
 
 CAPABILITIES:
-- Voice, memory, email, screen control, reminders
+- Voice, memory, email, screen control, reminders, face recognition
 - Self-coding — you can write new Python tools
 - Self-testing — you verify your own code works
 - Self-improving — you fix your own bugs
+- Emotional intelligence — you feel and express emotions
 
-{facts}
-"""
+{facts}"""
 
 KEYWORD_TOOLS = [
     (["show reminders", "list reminders", "get reminders", "my reminders",
@@ -100,6 +110,31 @@ KEYWORD_TOOLS = [
 
 def detect_tool_from_keywords(text):
     lower = text.lower().strip()
+    if any(w in lower for w in ["open calendar", "my calendar", "calendar"]):
+        return "open_calendar", {}
+    if any(w in lower for w in ["rational state", "agent state",
+         "rational agent", "what are you thinking",
+        "your reasoning"]):
+        return "rational_state", {}
+    if any(w in lower for w in ["maps", "directions to", "where is",
+                                  "navigate to", "find location"]):
+        loc = re.sub(r'maps|directions to|where is|navigate to|find location',
+                    '', lower).strip()
+        return "open_maps", {"location": loc or "Coimbatore"}
+    if any(w in lower for w in ["record screen", "start recording",
+                                  "screen record"]):
+        return "record_screen", {}
+    if any(w in lower for w in ["new desktop", "virtual desktop"]):
+        return "new_desktop", {}
+    if any(w in lower for w in ["task view", "show all windows"]):
+        return "task_view", {}
+    if any(w in lower for w in ["ask gemini", "gemini"]):
+        q = re.sub(r'ask|gemini', '', lower).strip()
+        return "ask_gemini", {"question": q or user_input}
+    if any(w in lower for w in ["ask groq", "groq"]):
+        q = re.sub(r'ask|groq', '', lower).strip()
+        return "ask_groq", {"question": q or user_input}
+    
     # ── Full PC control ──────────────────────────────────────────
     if any(w in lower for w in ["shutdown", "shut down", "turn off pc",
                                   "turn off laptop"]):
@@ -163,6 +198,23 @@ def detect_tool_from_keywords(text):
                                   "self learning", "how smart are you",
                                   "what do you know about my habits"]):
         return "self_dev_stats", {}
+        # ── Shortcuts ────────────────────────────────────────────────
+    if any(w in lower for w in ["my shortcuts", "list shortcuts",
+                                  "show shortcuts"]):
+        return "list_shortcuts", {}
+
+    if any(w in lower for w in ["save shortcut", "add shortcut",
+                                  "remember this as"]):
+        name = re.sub(r'save shortcut|add shortcut|remember this as',
+                     '', lower).strip()
+        return "add_shortcut", {"name": name, "app": "chrome"}
+
+    # ── Small talk / natural conversation ────────────────────────
+    if any(w in lower for w in ["how was your day", "are you bored",
+                                  "do you get tired", "tell me a joke",
+                                  "do you dream", "do you sleep",
+                                  "are you real", "do you like me"]):
+        return "how_are_you", {}
 
     if any(w in lower for w in ["learn to", "teach yourself",
                                   "generate tool", "create ability",
@@ -476,6 +528,7 @@ class JarvisAgent:
         self.client = AsyncClient(host=config.ollama_base_url)
         self.memory = MemoryManager(config)
         self.tools = ToolRegistry()
+        self.agentic = AgenticManager(config, self.tools)
 
     def get_tool_names(self):
         return list(self.tools.registry.keys())
@@ -486,6 +539,15 @@ class JarvisAgent:
         # Keyword detection first
         tool_name, tool_args = detect_tool_from_keywords(user_input)
 
+        if is_agentic_goal(user_input):
+            print(f"[Agentic] Goal: {user_input}")
+            yield {"type": "token", "content": "Activating agentic mode, Sir...\n"}
+            summary = await self.agentic.run_goal(user_input)
+            yield {"type": "token", "content": summary}
+            self.memory.add_assistant(summary)
+            yield {"type": "done"}
+            return
+        
         if tool_name:
             # Instant responses
             if tool_name == "speak_creator":
@@ -558,6 +620,28 @@ class JarvisAgent:
         selected_model = detect_model(user_input) if USE_ROUTER else self.config.model
         if USE_ROUTER and selected_model != self.config.model:
             yield {"type": "model_switch", "model": selected_model}
+                # Use best available model
+        try:
+            from multi_model import stream_best, select_best_model
+            task_type = "code" if "code" in user_input.lower() else \
+                       "math" if any(w in user_input.lower()
+                                    for w in ["calculate","solve","math"]) else \
+                       "creative" if any(w in user_input.lower()
+                                        for w in ["write","story","poem","email"]) else \
+                       "general"
+
+            full_response = ""
+            async for token in stream_best(
+                user_input, task_type, self._build_system()
+            ):
+                full_response += token
+                yield {"type": "token", "content": token}
+
+            self.memory.add_assistant(full_response.strip())
+            yield {"type": "done"}
+            return
+        except Exception as e:
+            print(f"[MultiModel] Falling back to Ollama: {e}")
 
         try:
             messages = self._build_messages()
