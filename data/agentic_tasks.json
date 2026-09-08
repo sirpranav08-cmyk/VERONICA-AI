@@ -1,0 +1,32 @@
+[
+  {
+    "id": "20260830_092651",
+    "goal": "find me Python jobs in Chennai",
+    "status": "failed",
+    "steps": 0,
+    "completed_steps": 0,
+    "created": "2026-08-30T09:26:51.563175",
+    "completed": null,
+    "summary": ""
+  },
+  {
+    "id": "20260830_093711_b77f36",
+    "goal": "find me Python jobs in Chennai",
+    "status": "done",
+    "steps": 3,
+    "completed_steps": 3,
+    "created": "2026-08-30T09:37:11.818208",
+    "completed": "2026-08-30T09:38:21.266990",
+    "summary": "Dear Sir, you successfully initiated searches for Python job opportunities in Chennai by opening LinkedIn jobs and Naukri platforms; however, we need to continue refining our approach if no immediate results are found yet on these sites. Let's persistently expand your network within the tech community of Chennai as a backup strategy while keeping an eye out for job postings that match your skills in Python programming."
+  },
+  {
+    "id": "20260830_093907_968d94",
+    "goal": "research best laptops under 50000",
+    "status": "running",
+    "steps": 3,
+    "completed_steps": 3,
+    "created": "2026-08-30T09:39:07.501243",
+    "completed": null,
+    "summary": ""
+  }
+]

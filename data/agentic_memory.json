@@ -1,0 +1,16 @@
+{
+  "long_term": {
+    "pattern_find_me_Python_jobs_in_Chennai": {
+      "value": {
+        "goal": "find me Python jobs in Chennai",
+        "tools": [
+          "web_search",
+          "open_url",
+          "open_url"
+        ],
+        "success_rate": 1.0
+      },
+      "time": "2026-08-30T09:38:21.264193"
+    }
+  }
+}
