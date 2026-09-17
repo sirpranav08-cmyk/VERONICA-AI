@@ -1,0 +1,80 @@
+{
+  "entities": {
+    "Pranav RK": {
+      "type": "person",
+      "properties": {
+        "role": "creator",
+        "college": "KCE"
+      },
+      "created": "2026-09-13T22:07:00.905355",
+      "updated": "2026-09-13T22:07:00.905369"
+    },
+    "VERONICA": {
+      "type": "ai",
+      "properties": {
+        "type": "AGI",
+        "creator": "Pranav RK"
+      },
+      "created": "2026-09-13T22:07:00.968995",
+      "updated": "2026-09-13T22:07:00.969010"
+    },
+    "Windows PC": {
+      "type": "device",
+      "properties": {
+        "os": "Windows 11"
+      },
+      "created": "2026-09-13T22:07:01.080903",
+      "updated": "2026-09-13T22:07:01.080918"
+    },
+    "Ollama": {
+      "type": "software",
+      "properties": {
+        "purpose": "LLM runtime"
+      },
+      "created": "2026-09-13T22:07:01.189529",
+      "updated": "2026-09-13T22:07:01.189541"
+    },
+    "Python": {
+      "type": "language",
+      "properties": {
+        "version": "3.14"
+      },
+      "created": "2026-09-13T22:07:01.253053",
+      "updated": "2026-09-13T22:07:01.253069"
+    }
+  },
+  "relations": [],
+  "causal": [
+    {
+      "cause": "RAM > 90%",
+      "effect": "System slowdown",
+      "probability": 0.95,
+      "observations": 1
+    },
+    {
+      "cause": "Battery < 10%",
+      "effect": "PC shutdown risk",
+      "probability": 0.9,
+      "observations": 1
+    },
+    {
+      "cause": "Long idle time",
+      "effect": "Screen should lock",
+      "probability": 0.85,
+      "observations": 1
+    },
+    {
+      "cause": "User compliment",
+      "effect": "VERONICA feels happy",
+      "probability": 0.9,
+      "observations": 1
+    },
+    {
+      "cause": "Task completed",
+      "effect": "User satisfaction",
+      "probability": 0.85,
+      "observations": 1
+    }
+  ],
+  "beliefs": {}
+}

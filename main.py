@@ -9,6 +9,8 @@ import asyncio
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
+import activity_monitor
+activity_monitor.start_monitoring()
 
 from core.agent import JarvisAgent
 from core.config import Config
@@ -103,7 +105,14 @@ async def startup_event():
         print("[Autonomous] Decision engine active")
     except Exception as e:
         print(f"[Autonomous] Error: {e}")
-
+    
+    # Start AGI engine
+    try:
+        import veronica_agi
+        veronica_agi.start(config, agent.tools)
+        print("[VERONICA] AGI engine online")
+    except Exception as e:
+        print(f"[AGI] Error: {e}")
     # Self development
     try:
         import self_dev
@@ -138,6 +147,14 @@ async def startup_event():
 @app.get("/health")
 async def health():
     return {"status": "online", "model": config.model, "agent": "VERONICA"}
+
+@app.get("/activity")
+async def get_activity():
+    return {"summary": activity_monitor.get_activity_summary()}
+
+@app.get("/productivity")
+async def get_productivity():
+    return {"score": activity_monitor.get_productivity_score()}
 
 # ── STATS ─────────────────────────────────────────────────────────
 @app.get("/nn-stats")

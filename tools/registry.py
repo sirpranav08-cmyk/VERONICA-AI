@@ -1748,73 +1748,37 @@ class ToolRegistry:
             return result or "Groq not available, Sir."
         
         @self.register(
-            name="optimize_ram",
-            description="Free up RAM by killing unnecessary processes and clearing cache",
+            name="get_activity_summary",
+            description="Get today's activity summary",
             args_schema={}
         )
-        def optimize_ram() -> str:
-            import subprocess, psutil
-            freed = 0
-            killed = []
-
-            # Processes safe to kill
-            bloat = [
-                "SearchIndexer.exe", "OneDrive.exe", "Teams.exe",
-                "Spotify.exe", "Discord.exe", "SkypeApp.exe",
-                "MicrosoftEdgeUpdate.exe", "GoogleUpdate.exe",
-                "YourPhone.exe", "PhoneExperienceHost.exe"
-            ]
-
-            before = psutil.virtual_memory().used // 1024 // 1024
-
-            for proc in psutil.process_iter(['name', 'pid']):
-                try:
-                    if proc.info['name'] in bloat:
-                        proc.kill()
-                        killed.append(proc.info['name'])
-                except Exception:
-                    pass
-
-            # Clear Windows standby memory
-            subprocess.run(
-                ["powershell", "-Command",
-                 "Clear-RecycleBin -Force -ErrorAction SilentlyContinue"],
-                capture_output=True
-            )
-
-            # Trim working sets
-            subprocess.run(
-                ["powershell", "-Command",
-                 "[System.GC]::Collect()"],
-                capture_output=True
-            )
-
-            after = psutil.virtual_memory().used // 1024 // 1024
-            freed = max(0, before - after)
-            ram = psutil.virtual_memory()
-            used_pct = ram.percent
-
-            result = f"RAM optimized, Sir.\n"
-            result += f"RAM usage: {used_pct:.0f}% ({ram.used//1024//1024}MB / {ram.total//1024//1024}MB)\n"
-            if freed > 0:
-                result += f"Freed: ~{freed}MB\n"
-            if killed:
-                result += f"Stopped: {', '.join(killed)}"
-            else:
-                result += "No bloat processes found running."
-            return result
-        @self.register(
-            name="rational_state",
-            description="Show rational agent state",
-            args_schema={}
-        )
-        def rational_state() -> str:
+        def get_activity_summary() -> str:
             try:
-                import rational_agent
-                instance = rational_agent.get_instance()
-                if instance:
-                    instance.perceive()
-                    return instance.get_state_summary()
-                return "Rational agent not running, Sir."
+                from activity_monitor import get_activity_summary as _gas
+                return _gas()
             except Exception as e:
-                return f"Error: {e}"
+                return f"Activity monitor error: {e}, Sir."
+
+        @self.register(
+            name="get_productivity",
+            description="Get productivity score and insight",
+                args_schema={}
+            )
+        def get_productivity() -> str:
+            try:
+                from activity_monitor import get_productivity_score
+                return get_productivity_score()
+            except Exception as e:
+                return f"Error: {e}, Sir."
+
+        @self.register(
+            name="get_app_breakdown",
+            description="Get app usage breakdown by category",
+            args_schema={}
+        )
+        def get_app_breakdown() -> str:
+            try:
+                from activity_monitor import get_app_breakdown as _gab
+                return _gab()
+            except Exception as e:
+                return f"Error: {e}, Sir."

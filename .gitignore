@@ -1,23 +1,37 @@
-# Face recognition data
-agent/data/faces/
-agent/data/face_model.yml
-agent/data/face_labels.txt
-agent/data/haarcascade.xml
-
-# Runtime/generated data
-agent/data/memory.json
-agent/data/reminders.json
-agent/data/usage_log.json
-agent/data/decisions_log.json
-agent/data/emotion_state.json
-
 # Python
 __pycache__/
-*.py[cod]
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
 .venv/
 venv/
+env/
 
 # Environment/secrets
 .env
-*.key
-*.pem.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+
+# Runtime/generated data
+data/agentic_memory.json
+data/agentic_tasks.json
+data/decisions_log.json
+data/emotion_state.json
+data/memory.json
+data/rational_state.json
+data/reminders.json
+data/usage_log.json
+data/utility_history.json
+data/activity/
+
+# Face recognition data / personal biometric data
+data/faces/
+data/face_model.yml
+
+# Local screenshots
+data/course_screenshot.png

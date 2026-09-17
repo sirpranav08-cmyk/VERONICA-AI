@@ -1,5 +1,4 @@
 """
-"""
 Global wake word listener - runs in background
 Listens for "Hey JARVIS" anywhere on Windows
 Opens JARVIS desktop app when detected
