@@ -7,17 +7,16 @@ from core.config import Config
 from memory.manager import MemoryManager
 from tools.registry import ToolRegistry
 import emotions
-import face_auth  # ← FIX: was never imported, but load_model() was called on it
-
 emotions.start()
-face_auth.load_model()  # safe now
-
+# Face login on startup
+import face_auth
+face_auth.load_model()
 from agentic import AgenticManager, is_agentic_goal
 
 try:
     from model_router import detect_model
     USE_ROUTER = True
-except Exception:
+except:
     USE_ROUTER = False
 
 SYSTEM_PROMPT = """You are VERONICA — Very Efficient Robotic Online Network Intelligent Computer Assistant.
@@ -62,14 +61,6 @@ KEYWORD_TOOLS = [
       "my contest", "my exam", "my schedule", "today plan",
       "what is today", "today tasks"],
      "get_reminders", {}),
-        (["my activity","what have i been doing","activity report",
-      "screen time","how long have i","time spent"],
-     "get_activity_summary", {}),
-    (["productivity","productivity score","how productive",
-      "am i productive","productivity report"],
-     "get_productivity", {}),
-    (["app breakdown","app usage","which apps","time per app"],
-     "get_app_breakdown", {}),
     (["system info", "system status", "cpu usage", "ram usage",
       "memory usage", "disk space", "my pc specs", "pc info"],
      "system_info", {}),
@@ -119,36 +110,34 @@ KEYWORD_TOOLS = [
 
 def detect_tool_from_keywords(text):
     lower = text.lower().strip()
-
     if any(w in lower for w in ["open calendar", "my calendar", "calendar"]):
         return "open_calendar", {}
     if any(w in lower for w in ["rational state", "agent state",
-                                "rational agent", "what are you thinking",
-                                "your reasoning"]):
+         "rational agent", "what are you thinking",
+        "your reasoning"]):
         return "rational_state", {}
     if any(w in lower for w in ["maps", "directions to", "where is",
-                                "navigate to", "find location"]):
+                                  "navigate to", "find location"]):
         loc = re.sub(r'maps|directions to|where is|navigate to|find location',
-                     '', lower).strip()
+                    '', lower).strip()
         return "open_maps", {"location": loc or "Coimbatore"}
     if any(w in lower for w in ["record screen", "start recording",
-                                "screen record"]):
+                                  "screen record"]):
         return "record_screen", {}
     if any(w in lower for w in ["new desktop", "virtual desktop"]):
         return "new_desktop", {}
     if any(w in lower for w in ["task view", "show all windows"]):
         return "task_view", {}
-    # FIX: was referencing undefined global 'user_input' — use 'text' instead
     if any(w in lower for w in ["ask gemini", "gemini"]):
         q = re.sub(r'ask|gemini', '', lower).strip()
-        return "ask_gemini", {"question": q or text}
+        return "ask_gemini", {"question": q or user_input}
     if any(w in lower for w in ["ask groq", "groq"]):
         q = re.sub(r'ask|groq', '', lower).strip()
-        return "ask_groq", {"question": q or text}
-
+        return "ask_groq", {"question": q or user_input}
+    
     # ── Full PC control ──────────────────────────────────────────
     if any(w in lower for w in ["shutdown", "shut down", "turn off pc",
-                                "turn off laptop"]):
+                                  "turn off laptop"]):
         return "shutdown_pc", {"delay": 10}
     if any(w in lower for w in ["restart", "reboot"]):
         return "restart_pc", {"delay": 10}
@@ -160,11 +149,10 @@ def detect_tool_from_keywords(text):
         return "hibernate_pc", {}
     if any(w in lower for w in ["battery", "battery status", "battery level"]):
         return "battery_status", {}
-    if "brightness" in lower:
+    if any(w in lower for w in ["brightness"]):
         level = 50
         m = re.search(r'(\d+)', lower)
-        if m:
-            level = int(m.group(1))
+        if m: level = int(m.group(1))
         return "set_brightness", {"level": level}
     if any(w in lower for w in ["disable wifi", "wifi off", "turn off wifi"]):
         return "wifi_control", {"action": "disable"}
@@ -172,18 +160,18 @@ def detect_tool_from_keywords(text):
         return "wifi_control", {"action": "enable"}
     if any(w in lower for w in ["my ip", "ip address", "network info"]):
         return "network_info", {}
-    if "ping" in lower:
+    if any(w in lower for w in ["ping"]):
         host = re.sub(r'ping', '', lower).strip() or "google.com"
         return "ping", {"host": host}
     if any(w in lower for w in ["list processes", "running apps",
-                                "what is running"]):
+                                  "what is running"]):
         return "list_processes", {}
     if any(w in lower for w in ["kill", "close process", "end task"]):
         name = re.sub(r'kill|process|close|end|task|app', '', lower).strip()
         if name:
             return "kill_process", {"name": name}
     if any(w in lower for w in ["disk usage", "storage", "how much space",
-                                "free space"]):
+                                  "free space"]):
         return "get_disk_usage", {}
     if any(w in lower for w in ["empty recycle", "clear recycle bin"]):
         return "empty_recycle_bin", {}
@@ -198,137 +186,117 @@ def detect_tool_from_keywords(text):
     if any(w in lower for w in ["snap right", "window right"]):
         return "window_snap_right", {}
     if any(w in lower for w in ["get clipboard", "what is in clipboard",
-                                "read clipboard"]):
+                                  "read clipboard"]):
         return "get_clipboard", {}
     if any(w in lower for w in ["your decisions", "what did you decide",
-                                "autonomous", "what have you done",
-                                "show decisions", "your actions"]):
+                                  "autonomous", "what have you done",
+                                  "show decisions", "your actions"]):
         return "show_decisions", {}
     if any(w in lower for w in ["open gmail", "open email", "check email"]):
         return "open_gmail", {}
     if any(w in lower for w in ["what have you learned", "your stats",
-                                "self learning", "how smart are you",
-                                "what do you know about my habits"]):
+                                  "self learning", "how smart are you",
+                                  "what do you know about my habits"]):
         return "self_dev_stats", {}
-
-    # ── Shortcuts ────────────────────────────────────────────────
+        # ── Shortcuts ────────────────────────────────────────────────
     if any(w in lower for w in ["my shortcuts", "list shortcuts",
-                                "show shortcuts"]):
+                                  "show shortcuts"]):
         return "list_shortcuts", {}
+
     if any(w in lower for w in ["save shortcut", "add shortcut",
-                                "remember this as"]):
+                                  "remember this as"]):
         name = re.sub(r'save shortcut|add shortcut|remember this as',
-                      '', lower).strip()
+                     '', lower).strip()
         return "add_shortcut", {"name": name, "app": "chrome"}
 
     # ── Small talk / natural conversation ────────────────────────
     if any(w in lower for w in ["how was your day", "are you bored",
-                                "do you get tired", "tell me a joke",
-                                "do you dream", "do you sleep",
-                                "are you real", "do you like me"]):
+                                  "do you get tired", "tell me a joke",
+                                  "do you dream", "do you sleep",
+                                  "are you real", "do you like me"]):
         return "how_are_you", {}
 
     if any(w in lower for w in ["learn to", "teach yourself",
-                                "generate tool", "create ability",
-                                "you can't do", "add ability"]):
-        cap = re.sub(r'learn to|teach yourself|generate tool|create ability|you cant do|add ability',
-                     '', lower).strip()
+                                  "generate tool", "create ability",
+                                  "you can't do", "add ability"]):
+        cap = re.sub(r'learn to|teach yourself|generate tool|create ability|you cant do|add ability', '', lower).strip()
         return "generate_tool", {"capability": cap or text}
-
+    
     if any(w in lower for w in ["weather in", "weather of",
-                                "temperature in", "how is weather"]):
+                                  "temperature in", "how is weather"]):
         city = re.sub(r'weather|temperature|in|of|what|is|the|how|like',
-                      '', lower).strip() or "Coimbatore"
+                     '', lower).strip() or "Coimbatore"
         return "get_weather", {"city": city}
     if any(w in lower for w in ["translate", "in tamil", "in hindi",
-                                "in french", "in japanese"]):
+                                  "in french", "in japanese"]):
         lang = ("ta" if "tamil" in lower else
                 "hi" if "hindi" in lower else
                 "fr" if "french" in lower else
                 "ja" if "japanese" in lower else "en")
         txt = re.sub(r'translate|in tamil|in hindi|in french|in japanese|this',
-                     '', lower).strip()
+                    '', lower).strip()
         return "translate_text", {"text": txt or text, "target_lang": lang}
-    if any(w in lower for w in ["search file", "find file"]):
+    if any(w in lower for w in ["search file", "find file", "where is"]):
         query = re.sub(r'search|find|file|where|is', '', lower).strip()
         return "search_files", {"query": query}
-    # ── Course completion ─────────────────────────────────────────
-    if any(w in lower for w in ["complete course", "learn course",
-                                "do course", "finish course", "course on"]):
-        url_m = re.search(r'https?://\S+', text)
-        url = url_m.group() if url_m else ""
-        return "complete_course", {"url": url}
-        # ── AGI commands ─────────────────────────────────────────────
-    if any(w in lower for w in ["agi status", "agi online",
-                                  "how smart are you"]):
-        return "agi_status", {}
-    if any(w in lower for w in ["remember this", "store this",
-                                  "dont forget", "agi remember"]):
-        content = re.sub(r'remember this|store this|dont forget|'
-                        r'agi remember', '', lower).strip()
-        return "agi_remember", {"content": content or user_input}
-    if any(w in lower for w in ["recall", "what do you remember",
-                                  "agi recall"]):
-        q = re.sub(r'recall|what do you remember|agi recall',
-                  '', lower).strip()
-        return "agi_recall", {"query": q or user_input}
-    if any(w in lower for w in ["introspect", "think about yourself",
-                                  "meta cognition", "your thoughts"]):
-        return "agi_introspect", {}
-    if any(w in lower for w in ["create idea", "generate idea",
-                                  "be creative", "creative solution"]):
-        topic = re.sub(r'create idea|generate idea|be creative|'
-                      r'creative solution about', '', lower).strip()
-        return "agi_create", {"topic": topic or user_input}
-    if any(w in lower for w in ["solve this problem", "novel problem",
-                                  "agi solve", "first principles"]):
-        prob = re.sub(r'solve this problem|novel problem|agi solve|'
-                     r'first principles', '', lower).strip()
-        return "agi_solve", {"problem": prob or user_input}
-    if any(w in lower for w in ["code health", "my code health",
-                                  "check your code"]):
-        return "agi_code_health", {}
+    # ── Full URL — highest priority ──────────────────────────────
+    import re as _re
+    full_url = _re.search(r'https?://\S+', text)
+    if full_url:
+        return "open_url", {"url": full_url.group()}
+    
     # ── Face authentication ──────────────────────────────────────
     if any(w in lower for w in ["scan my face", "scan face", "face scan",
-                                "recognize me", "authenticate face",
-                                "face login", "scane my face", "scan me",
-                                "who am i", "identify me"]):
+                                  "recognize me", "authenticate face",
+                                  "face login", "scane my face", "scan me",
+                                  "who am i", "identify me"]):
         return "face_login", {}
 
     if any(w in lower for w in ["register my face", "register face",
-                                "setup face", "add my face", "save my face"]):
+                                  "setup face", "add my face", "save my face"]):
         return "register_face", {"name": "Pranav"}
 
     if any(w in lower for w in ["who is there", "who do you see",
-                                "who is in front", "check camera"]):
+                                  "who is in front", "check camera"]):
         return "who_is_there", {}
-
     if any(w in lower for w in ["how are you", "how do you feel",
-                                "what is your mood", "are you okay",
-                                "how are you feeling", "your emotion"]):
+                                  "what is your mood", "are you okay",
+                                  "how are you feeling", "your emotion"]):
         return "how_are_you", {}
 
     if any(w in lower for w in ["be happy", "cheer up", "be excited",
-                                "be calm", "be sad", "feel happy"]):
+                                  "be calm", "be sad", "feel happy"]):
         emotion = re.search(r'happy|sad|excited|calm|angry|curious|tired|proud',
-                            lower)
+                           lower)
         if emotion:
             return "set_emotion", {"emotion": emotion.group()}
+    
+     # ── Face auth ─────────────────────────────────────────────────
+    if any(w in lower for w in ["register my face", "register face",
+                                  "setup face", "add my face"]):
+        return "register_face", {"name": "Pranav"}
 
-    # ── Greetings — instant ──────────────────────────────────────
+    if any(w in lower for w in ["face login", "authenticate face",
+                                  "scan my face", "verify face"]):
+        return "face_login", {}
+
+    if any(w in lower for w in ["who is there", "who is in front",
+                                  "who do you see", "camera"]):
+        return "who_is_there", {}
+     # ── Greetings — instant ──────────────────────────────────────
     if lower in ["hi", "hello", "hey", "hi veronica", "hello veronica",
                  "hey veronica", "good morning", "good afternoon",
                  "good evening", "good night", "greetings"]:
         return "speak_greeting", {}
-
+    
     # ── Full control keywords ─────────────────────────────────────
     if any(w in lower for w in ["weather", "what is the weather",
-                                "how is the weather"]):
+                                  "how is the weather"]):
         city = re.sub(r'weather|what is|how is|the|in', '', lower).strip() or "Coimbatore"
         return "get_weather", {"city": city}
 
     if any(w in lower for w in ["send whatsapp", "whatsapp message",
-                                "message on whatsapp"]):
+                                  "message on whatsapp"]):
         return "whatsapp_send", {"phone": "+917358570817", "message": text}
 
     if any(w in lower for w in ["send email", "email to", "compose email"]):
@@ -340,9 +308,10 @@ def detect_tool_from_keywords(text):
             return "download_file", {"url": url_m.group()}
 
     if any(w in lower for w in ["search youtube", "youtube", "play on youtube",
-                                "play from youtube", "play a song from youtube",
-                                "play song on youtube", "yotube", "you tube",
-                                "play on yt", "yt"]):
+                                  "play from youtube", "play a song from youtube",
+                                  "play song on youtube", "yotube", "you tube",
+                                  "play on yt", "yt"]):
+        # Remove only trigger words, keep song name
         query = lower
         for skip in ["search", "youtube", "yotube", "you tube", "play on",
                      "play from", "play a song from", "play song from",
@@ -350,9 +319,9 @@ def detect_tool_from_keywords(text):
             query = query.replace(skip, "")
         query = query.strip(" .,") or "trending songs"
         return "youtube_search", {"query": query}
-
+    
     if any(w in lower for w in ["translate", "translate this", "in tamil",
-                                "in hindi", "in french"]):
+                                  "in hindi", "in french"]):
         lang = "ta" if "tamil" in lower else "hi" if "hindi" in lower else "fr" if "french" in lower else "en"
         txt = re.sub(r'translate|this|in tamil|in hindi|in french', '', lower).strip()
         return "translate_text", {"text": txt or text, "target_lang": lang}
@@ -364,23 +333,24 @@ def detect_tool_from_keywords(text):
     if any(w in lower for w in ["weather in", "weather of", "temperature in"]):
         city = re.sub(r'weather|temperature|in|of|what|is|the', '', lower).strip()
         return "get_weather", {"city": city or "Coimbatore"}
-
+    
     # ── Creator ──────────────────────────────────────────────────
     if any(w in lower for w in ["i am your creator", "i am your crater",
-                                "i am your creater", "i made you",
-                                "i built you", "i created you",
-                                "your creator", "who created you"]):
+                                  "i am your creater", "i made you",
+                                  "i built you", "i created you",
+                                  "your creator", "who created you"]):
         return "speak_creator", {}
 
     # ── Self intro ───────────────────────────────────────────────
     if any(w in lower for w in ["tell about yourself", "about yourself",
-                                "who are you", "introduce yourself",
-                                "what are you", "tell me about you"]):
+                                  "who are you", "introduce yourself",
+                                  "what are you", "tell me about you"]):
         return "speak_intro", {}
 
     # ── Full form ────────────────────────────────────────────────
     if any(w in lower for w in ["full form of veronica", "what does veronica stand for",
-                                "full form", "expand veronica", "what is veronica"]):
+                                  "full form", "expand veronica",
+                                  "what is veronica"]):
         return "speak_fullform", {}
 
     # ── Knowledge questions — skip tools ─────────────────────────
@@ -398,11 +368,11 @@ def detect_tool_from_keywords(text):
         return "get_reminders", {}
 
     # ── Memory ───────────────────────────────────────────────────
-    if any(w in lower for w in ["what is my name", "my name"]):
+    if any(w in lower for w in ["what is my name", "my name", "who am i"]):
         return "recall_name", {}
 
     if any(w in lower for w in ["what do you know", "what do you remember",
-                                "my details", "my info", "know about me"]):
+                                  "my details", "my info", "know about me"]):
         return "get_facts", {}
 
     # ── Modes ────────────────────────────────────────────────────
@@ -432,6 +402,14 @@ def detect_tool_from_keywords(text):
     if any(w in lower for w in ["sleep pc", "put to sleep", "sleep laptop"]):
         return "sleep_pc", {}
 
+    # ── Brightness ───────────────────────────────────────────────
+    if "brightness" in lower:
+        level = 75
+        m = re.search(r'(\d+)', lower)
+        if m:
+            level = int(m.group(1))
+        return "set_brightness", {"level": level}
+
     # ── WiFi ─────────────────────────────────────────────────────
     if any(w in lower for w in ["disable wifi", "turn off wifi", "wifi off"]):
         return "wifi_control", {"action": "disable"}
@@ -452,7 +430,7 @@ def detect_tool_from_keywords(text):
 
     # ── Set reminder ─────────────────────────────────────────────
     if any(w in lower for w in ["set reminder", "remind me", "set an alarm",
-                                "set alarm", "reminder for", "notify me"]):
+                                  "set alarm", "reminder for", "notify me"]):
         time_match = re.search(r'(\d{1,2}):?(\d{2})?\s*(am|pm)?', lower)
         time_str = "09:00"
         if time_match:
@@ -520,14 +498,14 @@ def detect_tool_from_keywords(text):
 
     # ── Switch model ─────────────────────────────────────────────
     if any(w in lower for w in ["switch model", "change model", "use mistral",
-                                "use llama", "change llm", "switch llm"]):
+                                  "use llama", "change llm", "switch llm"]):
         for m in ["mistral", "llama3.2", "phi3", "tinyllama", "gemma2", "deepseek"]:
             if m in lower:
                 return "switch_model", {"model": m}
 
     # ── Restaurant booking ───────────────────────────────────────
     if any(w in lower for w in ["book a table", "book table", "reserve table",
-                                "restaurant booking", "book restaurant"]):
+                                  "restaurant booking", "book restaurant"]):
         return "book_restaurant", {"text": text}
 
     # ── Email search ─────────────────────────────────────────────
@@ -541,12 +519,8 @@ def detect_tool_from_keywords(text):
         if any(k in lower for k in keywords):
             return tool_name, tool_args
 
-    if any(w in lower for w in ["optimize ram", "free ram", "clear ram",
-                                "ram optimization", "free memory",
-                                "clear memory", "boost ram", "optimize memory"]):
-        return "optimize_ram", {}
-
     return None, None
+
 
 class JarvisAgent:
     def __init__(self, config: Config):
@@ -561,20 +535,19 @@ class JarvisAgent:
 
     async def stream(self, user_input: str):
         self.memory.add_user(user_input)
+    
+        # Keyword detection first
+        tool_name, tool_args = detect_tool_from_keywords(user_input)
 
-        # ── Agentic mode (checked ONCE — was duplicated) ─────────
         if is_agentic_goal(user_input):
-            print(f"[Agentic] Goal detected: {user_input}")
-            yield {"type": "token", "content": "🧠 Activating agentic mode...\n"}
+            print(f"[Agentic] Goal: {user_input}")
+            yield {"type": "token", "content": "Activating agentic mode, Sir...\n"}
             summary = await self.agentic.run_goal(user_input)
             yield {"type": "token", "content": summary}
             self.memory.add_assistant(summary)
             yield {"type": "done"}
             return
-
-        # Keyword detection
-        tool_name, tool_args = detect_tool_from_keywords(user_input)
-
+        
         if tool_name:
             # Instant responses
             if tool_name == "speak_creator":
@@ -589,6 +562,13 @@ class JarvisAgent:
                 h = datetime.now().hour
                 g = "Good morning" if h < 12 else "Good afternoon" if h < 18 else "Good evening"
                 reply = f"{g}, Sir. All systems online. How can I assist you?"
+                yield {"type": "token", "content": reply}
+                self.memory.add_assistant(reply)
+                yield {"type": "done"}
+                return
+
+            if tool_name == "speak_status":
+                reply = "All systems nominal, Sir. 8 LLMs loaded, memory active, tools ready."
                 yield {"type": "token", "content": reply}
                 self.memory.add_assistant(reply)
                 yield {"type": "done"}
@@ -640,16 +620,15 @@ class JarvisAgent:
         selected_model = detect_model(user_input) if USE_ROUTER else self.config.model
         if USE_ROUTER and selected_model != self.config.model:
             yield {"type": "model_switch", "model": selected_model}
-
-        # Use best available model
+                # Use best available model
         try:
-            from multi_model import stream_best
+            from multi_model import stream_best, select_best_model
             task_type = "code" if "code" in user_input.lower() else \
-                "math" if any(w in user_input.lower()
-                              for w in ["calculate", "solve", "math"]) else \
-                "creative" if any(w in user_input.lower()
-                                  for w in ["write", "story", "poem", "email"]) else \
-                "general"
+                       "math" if any(w in user_input.lower()
+                                    for w in ["calculate","solve","math"]) else \
+                       "creative" if any(w in user_input.lower()
+                                        for w in ["write","story","poem","email"]) else \
+                       "general"
 
             full_response = ""
             async for token in stream_best(
@@ -700,15 +679,13 @@ class JarvisAgent:
             yield {"type": "token", "content": reply}
             yield {"type": "done"}
 
-    def _build_system(self):
+    def _build_messages(self):
         try:
             facts = self.memory.get_all_facts()
-        except Exception:
+        except:
             facts = ""
         facts_section = f"Known facts about user:\n{facts}" if facts else ""
-        return SYSTEM_PROMPT.format(facts=facts_section)
-
-    def _build_messages(self):
-        messages = [{"role": "system", "content": self._build_system()}]
+        system = SYSTEM_PROMPT.format(facts=facts_section)
+        messages = [{"role": "system", "content": system}]
         messages += self.memory.get_context()
         return messages

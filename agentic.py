@@ -1,50 +1,54 @@
 """
-VERONICA Complete Agentic AI Engine v2.0
-Production-grade autonomous agent with:
-- Smart goal detection
-- Pattern-based + LLM planning
-- Multi-step execution
-- Error recovery
+VERONICA Complete Agentic AI Engine
+- Goal decomposition
+- Multi-step planning
+- Tool execution
 - Self reflection
-- Learning from outcomes
+- Memory across tasks
+- Error recovery
+- Parallel execution
+- Task queue
 """
 import json
 import asyncio
 import re
 import time
+import threading
 from datetime import datetime
 from pathlib import Path
-from collections import defaultdict
+from collections import deque
 
 DATA_DIR = Path("D:/jarvis-agent/agent/data")
-DATA_DIR.mkdir(parents=True, exist_ok=True)
-TASKS_FILE  = DATA_DIR / "agentic_tasks.json"
+TASKS_FILE = DATA_DIR / "agentic_tasks.json"
 MEMORY_FILE = DATA_DIR / "agentic_memory.json"
+DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 # ── TASK STATES ───────────────────────────────────────────────────
-PENDING  = "pending"
-PLANNING = "planning"
-RUNNING  = "running"
-DONE     = "done"
-FAILED   = "failed"
+TASK_PENDING   = "pending"
+TASK_PLANNING  = "planning"
+TASK_RUNNING   = "running"
+TASK_DONE      = "done"
+TASK_FAILED    = "failed"
+TASK_RETRYING  = "retrying"
 
 # ── AGENTIC MEMORY ────────────────────────────────────────────────
 class AgenticMemory:
     def __init__(self):
-        self.short_term = []
-        self.long_term  = {}
+        self.short_term = deque(maxlen=20)
+        self.long_term = {}
         self.load()
 
     def load(self):
         if MEMORY_FILE.exists():
             try:
-                d = json.loads(MEMORY_FILE.read_text())
-                self.long_term = d.get("long_term", {})
+                data = json.loads(MEMORY_FILE.read_text())
+                self.long_term = data.get("long_term", {})
             except: pass
 
     def save(self):
-        MEMORY_FILE.write_text(json.dumps(
-            {"long_term": self.long_term}, indent=2))
+        MEMORY_FILE.write_text(json.dumps({
+            "long_term": self.long_term
+        }, indent=2))
 
     def remember(self, key: str, value):
         self.long_term[key] = {
@@ -56,215 +60,101 @@ class AgenticMemory:
     def recall(self, key: str):
         return self.long_term.get(key, {}).get("value")
 
-    def add(self, item: dict):
+    def add_context(self, item: dict):
         self.short_term.append(item)
-        if len(self.short_term) > 20:
-            self.short_term = self.short_term[-20:]
 
-# ── SMART PLANNER ─────────────────────────────────────────────────
-class SmartPlanner:
+    def get_context(self) -> list:
+        return list(self.short_term)
+
+# ── GOAL PLANNER ──────────────────────────────────────────────────
+class GoalPlanner:
     def __init__(self, config):
         self.config = config
 
-    def _make_step(self, n, tool, args, desc):
-        return {"step": n, "tool": tool, "args": args, "description": desc}
+    async def decompose(self, goal: str) -> list:
+        """Break goal into executable steps."""
+        from ollama import AsyncClient
+        client = AsyncClient(host=self.config.ollama_base_url)
 
-    async def plan(self, goal: str) -> list:
-        """Generate execution plan for a goal."""
-        lower = goal.lower()
-                # ── ONLINE COURSE ─────────────────────────────────────────
-        if any(w in lower for w in ["complete course", "learn course",
-                                     "course on", "codechef", "coursera",
-                                     "udemy", "do course"]):
-            url_match = re.search(r'https?://\S+', goal)
-            url = url_match.group() if url_match else ""
-            return [
-                self._make_step(1, "complete_course",
-                    {"url": url},
-                    "Opening and navigating the course"),
-                self._make_step(2, "take_screenshot",
-                    {},
-                    "Capturing course state"),
-            ]
-            
-        # ── JOB SEARCH ───────────────────────────────────────────
-        if any(w in lower for w in ["find me", "jobs", "internship",
-                                     "hiring", "vacancy", "career"]):
-            city = "Chennai"
-            for c in ["chennai","bangalore","mumbai","delhi",
-                      "hyderabad","coimbatore","pune","remote"]:
-                if c in lower: city = c.title(); break
-            skill = "Python"
-            for s in ["python","java","react","android","ml","ai",
-                      "data","web","flutter","node","devops","c++"]:
-                if s in lower: skill = s.title(); break
-            return [
-                self._make_step(1,"web_search",
-                    {"query":f"{skill} jobs {city} 2026 fresher"},
-                    f"Searching {skill} jobs in {city}"),
-                self._make_step(2,"open_url",
-                    {"url":f"https://www.linkedin.com/jobs/search/?keywords={skill}&location={city}"},
-                    "Opening LinkedIn jobs"),
-                self._make_step(3,"open_url",
-                    {"url":f"https://www.naukri.com/{skill.lower()}-jobs-in-{city.lower()}"},
-                    "Opening Naukri jobs"),
-                self._make_step(4,"open_url",
-                    {"url":f"https://internshala.com/internships/{skill.lower()}-internship-in-{city.lower()}"},
-                    "Opening Internshala internships"),
-            ]
+        available_tools = [
+            "open_url", "web_search", "send_email", "whatsapp_send",
+            "take_screenshot", "run_shell", "write_file", "read_file",
+            "open_app", "get_weather", "translate_text", "youtube_search",
+            "system_info", "get_reminders", "set_reminder", "play_spotify",
+            "lock_screen", "volume_control", "get_disk_usage", "network_info",
+            "take_screenshot", "list_processes", "kill_process", "battery_status",
+            "get_clipboard", "set_clipboard", "search_files", "open_folder",
+            "activate_mode", "shutdown_pc", "restart_pc", "set_brightness",
+            "mouse_click", "type_text", "press_key", "scroll", "minimize_all"
+        ]
 
-        # ── RESEARCH ─────────────────────────────────────────────
-        if any(w in lower for w in ["research","best","compare",
-                                     "review","top","recommend"]):
-            q = goal.replace(" ","+" )
-            topic = re.sub(r'research|best|compare|review|top|'
-                          r'recommend|under|above|find','',lower).strip()
-            return [
-                self._make_step(1,"web_search",
-                    {"query": goal},
-                    f"Searching: {goal}"),
-                self._make_step(2,"open_url",
-                    {"url":f"https://www.google.com/search?q={q}"},
-                    "Opening Google results"),
-                self._make_step(3,"youtube_search",
-                    {"query": topic or goal},
-                    f"Finding YouTube videos about {topic or goal}"),
-            ]
-
-        # ── STUDY / PLANNING ─────────────────────────────────────
-        if any(w in lower for w in ["plan","schedule","organize",
-                                     "study","timetable","routine"]):
-            return [
-                self._make_step(1,"get_reminders",{},
-                    "Checking existing tasks and reminders"),
-                self._make_step(2,"system_info",{},
-                    "Checking system status"),
-                self._make_step(3,"open_app",{"app":"notepad"},
-                    "Opening Notepad for planning"),
-            ]
-
-        # ── SYSTEM HEALTH ─────────────────────────────────────────
-        if any(w in lower for w in ["system health","optimize",
-                                     "free memory","clean up","maintenance"]):
-            return [
-                self._make_step(1,"system_info",{},
-                    "Checking CPU, RAM and disk"),
-                self._make_step(2,"get_disk_usage",{},
-                    "Checking disk space"),
-                self._make_step(3,"empty_recycle_bin",{},
-                    "Emptying recycle bin"),
-                self._make_step(4,"list_processes",{},
-                    "Listing heavy processes"),
-            ]
-
-        # ── YOUTUBE ───────────────────────────────────────────────
-        if any(w in lower for w in ["youtube","tutorial","video",
-                                     "watch","learn how"]):
-            q = re.sub(r'search|youtube|find|watch|tutorial|video|'
-                      r'learn how|on','',lower).strip()
-            return [
-                self._make_step(1,"youtube_search",
-                    {"query": q or goal},
-                    f"Searching YouTube: {q or goal}"),
-                self._make_step(2,"open_url",
-                    {"url":f"https://www.youtube.com/results?search_query={q.replace(' ','+')}"},
-                    "Opening YouTube search results"),
-            ]
-
-        # ── NEWS / CURRENT EVENTS ─────────────────────────────────
-        if any(w in lower for w in ["news","latest","current",
-                                     "today","trending","what happened"]):
-            topic = re.sub(r'news|latest|current|today|trending|'
-                          r'what happened','',lower).strip()
-            return [
-                self._make_step(1,"web_search",
-                    {"query":f"{topic} news today 2026"},
-                    f"Searching latest news: {topic}"),
-                self._make_step(2,"open_url",
-                    {"url":f"https://news.google.com/search?q={topic.replace(' ','+')}"},
-                    "Opening Google News"),
-            ]
-
-        # ── WEATHER + PLAN ────────────────────────────────────────
-        if any(w in lower for w in ["weather","temperature","forecast"]):
-            city = re.sub(r'weather|temperature|forecast|in|of|what|is',
-                         '',lower).strip() or "Coimbatore"
-            return [
-                self._make_step(1,"get_weather",
-                    {"city": city},
-                    f"Getting weather for {city}"),
-            ]
-                # ── ONLINE COURSE ─────────────────────────────────────────
-        if any(w in lower for w in ["complete course", "learn course",
-                                     "finish course", "do course",
-                                     "codechef", "coursera", "udemy",
-                                     "course on"]):
-            url = ""
-            url_match = re.search(r'https?://\S+', goal)
-            if url_match:
-                url = url_match.group()
-            return [
-                self._make_step(1,"open_url",
-                    {"url": url or "https://www.codechef.com/learn"},
-                    "Opening the course page"),
-                self._make_step(2,"take_screenshot",
-                    {},
-                    "Taking screenshot of course content"),
-                self._make_step(3,"web_scrape",
-                    {"url": url or "https://www.codechef.com/learn"},
-                    "Reading course content"),
-                self._make_step(4,"open_url",
-                    {"url": url or "https://www.codechef.com/learn"},
-                    "Navigating to first lesson"),
-            ]
-        # ── LLM FALLBACK ──────────────────────────────────────────
-        try:
-            from ollama import AsyncClient
-            client = AsyncClient(host=self.config.ollama_base_url)
-            prompt = f"""You are a task planner. Break this goal into 2-4 steps.
+        prompt = f"""You are VERONICA's task planner. Break this goal into steps.
 
 Goal: {goal}
 
-Available tools (use EXACT names):
-- web_search: {{"query": "search terms"}}
-- open_url: {{"url": "https://..."}}
-- youtube_search: {{"query": "search terms"}}
-- get_reminders: {{}}
-- system_info: {{}}
-- open_app: {{"app": "chrome/notepad/spotify"}}
-- get_weather: {{"city": "city name"}}
-- translate_text: {{"text": "...", "target_lang": "ta/hi/fr"}}
-- take_screenshot: {{}}
-- get_disk_usage: {{}}
+Available tools: {", ".join(available_tools)}
 
-Return ONLY valid JSON array, nothing else:
-[{{"step":1,"tool":"tool_name","args":{{"key":"value"}},"description":"short description"}}]"""
+Rules:
+- Max 5 steps
+- Each step must use ONE tool
+- Args must match the tool
+- Be specific and actionable
 
+Return ONLY valid JSON array:
+[
+  {{
+    "step": 1,
+    "tool": "tool_name",
+    "args": {{"key": "value"}},
+    "description": "what this does",
+    "depends_on": []
+  }}
+]"""
+
+        try:
             resp = await client.chat(
                 model="llama3.2:1b",
-                messages=[{"role":"user","content":prompt}],
+                messages=[{"role": "user", "content": prompt}],
                 stream=False,
-                options={"temperature":0.1,"num_predict":400}
+                options={"temperature": 0.1, "num_predict": 500}
             )
             text = resp["message"]["content"].strip()
-            # Extract JSON
             match = re.search(r'\[.*?\]', text, re.DOTALL)
             if match:
-                steps = json.loads(match.group())
-                if steps and isinstance(steps, list):
-                    return steps
+                return json.loads(match.group())
         except Exception as e:
-            print(f"[Planner] LLM error: {e}")
+            print(f"[Planner] Error: {e}")
+        return []
 
-        # ── LAST RESORT ───────────────────────────────────────────
-        return [
-            self._make_step(1,"web_search",
-                {"query": goal},
-                f"Searching: {goal}"),
-            self._make_step(2,"open_url",
-                {"url":f"https://www.google.com/search?q={goal.replace(' ','+')}"},
-                "Opening Google results"),
-        ]
+    async def replan(self, goal: str, failed_step: dict,
+                    error: str) -> list:
+        """Replan after a step fails."""
+        from ollama import AsyncClient
+        client = AsyncClient(host=self.config.ollama_base_url)
+
+        prompt = f"""Goal: {goal}
+Step that failed: {json.dumps(failed_step)}
+Error: {error}
+
+Create a NEW single step to recover from this failure.
+Return ONLY JSON: {{"tool": "name", "args": {{}}, "description": "..."}}"""
+
+        try:
+            resp = await client.chat(
+                model="tinyllama",
+                messages=[{"role": "user", "content": prompt}],
+                stream=False,
+                options={"temperature": 0.2}
+            )
+            text = resp["message"]["content"].strip()
+            match = re.search(r'\{.*?\}', text, re.DOTALL)
+            if match:
+                step = json.loads(match.group())
+                step["step"] = failed_step.get("step", 99)
+                step["depends_on"] = []
+                return [step]
+        except: pass
+        return []
 
 # ── STEP EXECUTOR ─────────────────────────────────────────────────
 class StepExecutor:
@@ -272,228 +162,294 @@ class StepExecutor:
         self.tools = tools
         self.results = {}
 
-    async def run(self, step: dict) -> dict:
-        """Execute one step with retry."""
-        tool = step.get("tool") or step.get("action", "")
+    async def execute(self, step: dict) -> dict:
+        """Execute a single step with retry."""
+        tool = step.get("tool") or step.get("action")
         args = step.get("args", {})
-        num  = step.get("step", 0)
+        step_num = step.get("step", 0)
         desc = step.get("description", tool)
 
-        for attempt in range(2):
+        print(f"[Executor] Step {step_num}: {desc}")
+
+        for attempt in range(3):
             try:
                 result = await self.tools.execute(tool, args)
-                self.results[num] = str(result)
-                return {"step":num,"tool":tool,"description":desc,
-                       "result":str(result),"success":True}
+                self.results[step_num] = result
+                return {
+                    "step": step_num,
+                    "tool": tool,
+                    "description": desc,
+                    "result": result,
+                    "success": True,
+                    "attempts": attempt + 1
+                }
             except Exception as e:
-                if attempt == 0:
+                if attempt < 2:
                     await asyncio.sleep(1)
-                else:
-                    return {"step":num,"tool":tool,"description":desc,
-                           "result":str(e),"success":False}
+                    continue
+                return {
+                    "step": step_num,
+                    "tool": tool,
+                    "description": desc,
+                    "result": str(e),
+                    "success": False,
+                    "attempts": attempt + 1
+                }
+
+    def get_result(self, step_num: int) -> str:
+        return self.results.get(step_num, "")
 
 # ── REFLECTOR ─────────────────────────────────────────────────────
 class Reflector:
     def __init__(self, config):
         self.config = config
 
-    async def summarize(self, goal: str, results: list) -> str:
-        """Generate summary of completed task."""
-        done   = [r for r in results if r.get("success")]
+    async def reflect(self, goal: str, steps: list,
+                     results: list) -> str:
+        """Reflect on what was done and summarize."""
+        from ollama import AsyncClient
+        client = AsyncClient(host=self.config.ollama_base_url)
+
+        done = [r for r in results if r.get("success")]
         failed = [r for r in results if not r.get("success")]
 
-        if not failed:
-            return (f"All {len(done)} steps completed successfully, Sir. "
-                   f"Goal achieved: {goal[:50]}.")
-        return (f"Completed {len(done)} of {len(results)} steps, Sir. "
-               f"{len(failed)} step(s) had issues but I did my best.")
+        prompt = f"""Goal: {goal}
+Completed {len(done)}/{len(results)} steps.
+Results summary: {json.dumps([{
+    "step": r["step"],
+    "action": r["description"],
+    "success": r["success"]
+} for r in results], indent=2)}
 
-    async def learn(self, goal: str, results: list, memory: AgenticMemory):
-        """Save learned patterns."""
-        tools = [r["tool"] for r in results if r.get("success")]
-        if tools:
-            key = f"goal_{goal[:20].replace(' ','_')}"
-            memory.remember(key, {"goal":goal,"tools":tools,
+Write a 2 sentence summary addressing user as Sir.
+Be honest about what worked and what didn't."""
+
+        try:
+            resp = await client.chat(
+                model="tinyllama",
+                messages=[{"role": "user", "content": prompt}],
+                stream=False,
+                options={"temperature": 0.3, "num_predict": 100}
+            )
+            return resp["message"]["content"].strip()
+        except:
+            if failed:
+                return (f"Completed {len(done)} of {len(results)} steps, Sir. "
+                       f"{len(failed)} step(s) encountered issues.")
+            return f"All {len(done)} steps completed successfully, Sir."
+
+    async def learn(self, goal: str, results: list,
+                   memory: AgenticMemory):
+        """Learn from this task execution."""
+        # Remember successful tool combinations
+        successful_tools = [r["tool"] for r in results if r.get("success")]
+        if successful_tools:
+            pattern_key = f"pattern_{goal[:20].replace(' ','_')}"
+            memory.remember(pattern_key, {
+                "goal": goal,
+                "tools": successful_tools,
                 "success_rate": len([r for r in results
-                                    if r.get("success")])/len(results)})
+                                   if r.get("success")]) / len(results)
+            })
 
-# ── AGENTIC TASK ──────────────────────────────────────────────────
+# ── TASK ──────────────────────────────────────────────────────────
 class AgenticTask:
     def __init__(self, goal: str):
-        self.id      = datetime.now().strftime("%Y%m%d_%H%M%S")
-        self.goal    = goal
-        self.status  = PENDING
-        self.steps   = []
+        self.id = datetime.now().strftime("%Y%m%d_%H%M%S")
+        self.goal = goal
+        self.status = TASK_PENDING
+        self.steps = []
         self.results = []
-        self.summary = ""
         self.created = datetime.now().isoformat()
+        self.completed = None
+        self.summary = ""
 
-    def to_dict(self):
-        done = len([r for r in self.results if r.get("success")])
-        return {"id":self.id,"goal":self.goal,"status":self.status,
-                "total_steps":len(self.steps),
-                "completed_steps":done,
-                "summary":self.summary,"created":self.created}
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "goal": self.goal,
+            "status": self.status,
+            "steps": len(self.steps),
+            "completed_steps": len([r for r in self.results
+                                   if r.get("success")]),
+            "created": self.created,
+            "completed": self.completed,
+            "summary": self.summary
+        }
 
 # ── MAIN AGENTIC MANAGER ──────────────────────────────────────────
 class AgenticManager:
     def __init__(self, config, tools):
-        self.config    = config
-        self.tools     = tools
-        self.planner   = SmartPlanner(config)
-        self.executor  = StepExecutor(tools)
+        self.config = config
+        self.tools = tools
+        self.planner = GoalPlanner(config)
+        self.executor = StepExecutor(tools)
         self.reflector = Reflector(config)
-        self.memory    = AgenticMemory()
-        self.history   = []
-        self.active    = None
+        self.memory = AgenticMemory()
+        self.task_queue = asyncio.Queue()
+        self.task_history = []
+        self.active_task = None
 
     async def run_goal(self, goal: str, callback=None) -> str:
-        """Full agentic task execution pipeline."""
+        """Execute a complete agentic goal."""
         task = AgenticTask(goal)
-        self.active = task
-        self.history.append(task)
+        self.active_task = task
+        self.task_history.append(task)
 
         try:
-            # ── PHASE 1: ANNOUNCE ─────────────────────────────────
-            task.status = PLANNING
+            # ── PHASE 1: PLANNING ─────────────────────────────────
+            task.status = TASK_PLANNING
             if callback:
-                await callback({"type":"agentic_start",
-                               "goal":goal,"task_id":task.id})
-                await callback({"type":"token",
-                               "content":f"🧠 Planning: {goal}\n\n"})
+                await callback({
+                    "type": "agentic_start",
+                    "goal": goal,
+                    "task_id": task.id
+                })
+                await callback({
+                    "type": "token",
+                    "content": f"🧠 Planning how to: {goal}\n"
+                })
 
-            # ── PHASE 2: PLAN ─────────────────────────────────────
-            steps = await self.planner.plan(goal)
-            task.steps = steps
+            steps = await self.planner.decompose(goal)
 
             if not steps:
-                task.status = FAILED
-                if callback:
-                    await callback({"type":"done"})
-                return "I could not plan steps for that goal, Sir."
+                # Fallback — try simple execution
+                task.status = TASK_FAILED
+                return f"I could not plan steps for that goal, Sir. Please be more specific."
 
-            task.status = RUNNING
+            task.steps = steps
+            task.status = TASK_RUNNING
+
             if callback:
-                await callback({"type":"token",
-                    "content":f"📋 {len(steps)} steps planned:\n"})
-                for s in steps:
-                    await callback({"type":"token",
-                        "content":f"  {s['step']}. {s['description']}\n"})
-                await callback({"type":"token","content":"\n"})
+                await callback({
+                    "type": "token",
+                    "content": f"📋 {len(steps)} steps planned. Executing...\n\n"
+                })
 
-            # ── PHASE 3: EXECUTE ──────────────────────────────────
+            # ── PHASE 2: EXECUTION ────────────────────────────────
             executor = StepExecutor(self.tools)
-            results  = []
+            results = []
 
             for step in steps:
-                num  = step.get("step",0)
-                desc = step.get("description","")
+                step_num = step.get("step", 0)
+                desc = step.get("description", "")
 
                 if callback:
-                    await callback({"type":"token",
-                        "content":f"⚡ Step {num}: {desc}...\n"})
+                    await callback({
+                        "type": "token",
+                        "content": f"⚡ Step {step_num}: {desc}\n"
+                    })
 
-                result = await executor.run(step)
+                result = await executor.execute(step)
                 results.append(result)
 
-                status = "✅" if result["success"] else "❌"
-                snippet = str(result.get("result",""))[:60]
                 if callback:
-                    await callback({"type":"token",
-                        "content":f"{status} {snippet}\n"})
+                    status = "✅" if result["success"] else "❌"
+                    await callback({
+                        "type": "token",
+                        "content": f"{status} {result.get('result', '')[:80]}\n"
+                    })
 
-                await asyncio.sleep(0.3)
+                # If step failed — try to recover
+                if not result["success"] and step_num < len(steps):
+                    recovery = await self.planner.replan(
+                        goal, step, result["result"])
+                    if recovery:
+                        if callback:
+                            await callback({
+                                "type": "token",
+                                "content": "🔄 Trying recovery step...\n"
+                            })
+                        rec_result = await executor.execute(recovery[0])
+                        results.append(rec_result)
+
+                await asyncio.sleep(0.5)
 
             task.results = results
 
-            # ── PHASE 4: REFLECT ──────────────────────────────────
+            # ── PHASE 3: REFLECTION ───────────────────────────────
             if callback:
-                await callback({"type":"token",
-                    "content":"\n🔍 Summarizing results...\n"})
+                await callback({
+                    "type": "token",
+                    "content": "\n🔍 Reflecting on results...\n"
+                })
 
-            summary = await self.reflector.summarize(goal, results)
+            summary = await self.reflector.reflect(goal, steps, results)
             await self.reflector.learn(goal, results, self.memory)
 
-            task.status  = DONE
+            task.status = TASK_DONE
+            task.completed = datetime.now().isoformat()
             task.summary = summary
 
-            self.memory.add({"goal":goal,
-                "done":len([r for r in results if r.get("success")]),
-                "total":len(results),
-                "time":datetime.now().isoformat()})
+            # Add context to memory
+            self.memory.add_context({
+                "goal": goal,
+                "success": len([r for r in results if r.get("success")]),
+                "total": len(results),
+                "time": task.completed
+            })
 
             if callback:
-                await callback({"type":"token",
-                    "content":f"\n📊 {summary}\n"})
-                await callback({"type":"done"})
+                await callback({"type": "done"})
 
-            self._save()
             return summary
 
         except Exception as e:
-            task.status = FAILED
-            print(f"[Agentic] Fatal: {e}")
+            task.status = TASK_FAILED
+            print(f"[Agentic] Fatal error: {e}")
             if callback:
-                await callback({"type":"done"})
-            return f"Agentic task encountered an error, Sir: {str(e)[:80]}"
-        finally:
-            self.active = None
+                await callback({"type": "done"})
+            return f"Agentic task failed, Sir: {str(e)[:100]}"
 
-    def _save(self):
+        finally:
+            self.active_task = None
+            self._save_history()
+
+    def _save_history(self):
         try:
-            TASKS_FILE.write_text(json.dumps(
-                [t.to_dict() for t in self.history[-20:]], indent=2))
+            data = [t.to_dict() for t in self.task_history[-20:]]
+            TASKS_FILE.write_text(json.dumps(data, indent=2))
         except: pass
 
-    def get_history(self, n=10) -> list:
-        return [t.to_dict() for t in self.history[-n:]]
+    def get_history(self) -> list:
+        return [t.to_dict() for t in self.task_history[-10:]]
 
-    def get_active(self):
-        return self.active.to_dict() if self.active else None
+    def get_active_task(self):
+        if self.active_task:
+            return self.active_task.to_dict()
+        return None
 
     def get_memory_stats(self) -> dict:
         return {
-            "memories": len(self.memory.long_term),
-            "context":  len(self.memory.short_term),
-            "tasks_done":   len([t for t in self.history if t.status==DONE]),
-            "tasks_failed": len([t for t in self.history if t.status==FAILED]),
+            "long_term_memories": len(self.memory.long_term),
+            "short_term_context": len(self.memory.get_context()),
+            "tasks_completed": len([t for t in self.task_history
+                                   if t.status == TASK_DONE]),
+            "tasks_failed": len([t for t in self.task_history
+                                if t.status == TASK_FAILED])
         }
-    def is_agentic_goal(text: str) -> bool:
-        lower = text.lower().strip()
-        if any(e in lower for e in AGENTIC_EXCLUDE):
-            return False
-        has_trigger = any(t in lower for t in AGENTIC_TRIGGERS)
-        return has_trigger and len(text.split()) > 2  # changed from 4 to 2
 
 # ── GOAL DETECTOR ─────────────────────────────────────────────────
 AGENTIC_TRIGGERS = [
     "find me", "research", "book a", "plan a",
-    "help me plan", "i need you to", "organize",
+    "help me", "i need you to", "organize",
     "create a plan", "set up", "do everything",
     "handle", "manage", "automatically",
-    "complete task", "step by step", "can you do",
-    "take care of", "look for jobs", "find jobs",
-    "check system health", "system health",
-    "complete course", "learn course", "course on",
-    "codechef", "coursera", "udemy", "do course",
-    "complete course", "learn course", "finish course",
-    "do course", "course on", "codechef", "coursera",
-    "find internship", "search and open",
-    "find and open", "latest news", "current news",
+    "complete task", "full task", "step by step",
+    "can you do", "take care of",
 ]
 
 AGENTIC_EXCLUDE = [
     "hi", "hello", "how are you", "what is",
-    "who are you", "volume", "lock", "shutdown",
-    "play song", "open chrome", "show", "mute",
-    "brightness", "battery", "system info",
-    "take screenshot", "weather in",
+    "who are you", "open", "play", "show",
+    "volume", "lock", "shutdown", "restart"
 ]
 
 def is_agentic_goal(text: str) -> bool:
-    """Detect if input needs agentic multi-step execution."""
-    lower = text.lower().strip()
+    """Detect if this needs agentic execution."""
+    lower = text.lower()
     if any(e in lower for e in AGENTIC_EXCLUDE):
         return False
     has_trigger = any(t in lower for t in AGENTIC_TRIGGERS)
-    return has_trigger and len(text.split()) > 4
+    word_count = len(text.split())
+    return has_trigger and word_count > 6

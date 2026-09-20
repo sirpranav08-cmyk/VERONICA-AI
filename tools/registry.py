@@ -1746,39 +1746,3 @@ class ToolRegistry:
             from multi_model import ask_groq
             result = await ask_groq(question)
             return result or "Groq not available, Sir."
-        
-        @self.register(
-            name="get_activity_summary",
-            description="Get today's activity summary",
-            args_schema={}
-        )
-        def get_activity_summary() -> str:
-            try:
-                from activity_monitor import get_activity_summary as _gas
-                return _gas()
-            except Exception as e:
-                return f"Activity monitor error: {e}, Sir."
-
-        @self.register(
-            name="get_productivity",
-            description="Get productivity score and insight",
-                args_schema={}
-            )
-        def get_productivity() -> str:
-            try:
-                from activity_monitor import get_productivity_score
-                return get_productivity_score()
-            except Exception as e:
-                return f"Error: {e}, Sir."
-
-        @self.register(
-            name="get_app_breakdown",
-            description="Get app usage breakdown by category",
-            args_schema={}
-        )
-        def get_app_breakdown() -> str:
-            try:
-                from activity_monitor import get_app_breakdown as _gab
-                return _gab()
-            except Exception as e:
-                return f"Error: {e}, Sir."

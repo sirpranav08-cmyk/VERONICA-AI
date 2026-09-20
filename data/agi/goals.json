@@ -1,0 +1,22 @@
+[
+  {
+    "goal": "Help Pranav succeed in his studies",
+    "priority": 1,
+    "status": "active"
+  },
+  {
+    "goal": "Learn something new every day",
+    "priority": 2,
+    "status": "active"
+  },
+  {
+    "goal": "Improve my response speed",
+    "priority": 3,
+    "status": "active"
+  },
+  {
+    "goal": "Understand Pranav's schedule better",
+    "priority": 4,
+    "status": "active"
+  }
+]
